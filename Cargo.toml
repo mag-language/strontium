@@ -1,0 +1,8 @@
+[package]
+name = "strontium"
+version = "0.5.1"
+authors = ["Moritz Riede <mriede@tuta.io>"]
+edition = "2018"
+
+[dependencies]
+bytes   = "0.4.10"
