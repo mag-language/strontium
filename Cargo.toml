@@ -1,8 +1,10 @@
 [package]
 name = "strontium"
+description = "A generic low-level process virtual machine"
 version = "0.5.1"
 authors = ["Moritz Riede <mriede@tuta.io>"]
 edition = "2018"
+license = "CC-BY-SA NC 4.0"
 
 [dependencies]
 bytes   = "0.4.10"
