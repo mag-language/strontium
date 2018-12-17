@@ -54,6 +54,5 @@ The following tests have been implemented:
 
 ## License
 
-This project is licensed under [Creative Commons BY-SA NC 
-4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+This project is licensed under [Creative Commons Attribution Share-Alike 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
 
