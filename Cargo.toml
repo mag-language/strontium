@@ -10,4 +10,5 @@ license-file = "LICENSE"
 keywords = ["vm", "language", "bytecode", "p-code-machine"]
 
 [dependencies]
-bytes   = "0.4.10"
+bytes = "0.4.10"
+hex   = "0.3.2"
