@@ -10,7 +10,7 @@ pub struct Machine {
 	/// The machine's current position in the bytecode
 	pub pointer: usize,
 	/// Contains the bytecode of the program
-	program: Vec<u8>,
+	pub program: Vec<u8>,
 	/// Models physical memory as an array of bits
 	pub memory:  Memory,
 	/// Indicates if there has been an error
@@ -232,7 +232,10 @@ impl Machine {
         // Let's create a buffer slice that contains the needed bytes
         let mut bytes = Cursor::new(&self.program[self.pointer .. self.pointer + 4]);
         let num = bytes.get_u32_be() as usize;
-        self.advance()?;
+
+        if self.program.len() > self.pointer + 4 {
+        	self.advance()?;
+        } 
         Ok(num)
     }
 
@@ -273,8 +276,7 @@ mod tests {
     					    0, 0, 0, 4,
     					    0, 0, 0, 0]);
 
-    	machine.execute().unwrap();
-    	machine.execute().unwrap();
+    	machine.execute_loop();
 
     	assert_eq!(machine.memory.data[4], true);
     }
