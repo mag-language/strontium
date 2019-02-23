@@ -106,5 +106,21 @@ pub enum BitwiseMethod {
 		out: u64,
 		amount: usize,
 		len: usize,
-	}
+	},
+
+	GROW {
+		amount: u64,
+	},
+
+	SHRINK {
+		amount: u64,
+	},
+
+	SET {
+		amount: u64,
+	},
+
+	UNSET {
+		amount: u64,
+	},
 }
