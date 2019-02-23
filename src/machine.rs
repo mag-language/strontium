@@ -295,6 +295,47 @@ mod tests {
     	assert_eq!(machine.registers.int[2], 3);
     }
 
+
+    #[test]
+    fn execute_mul() {
+    	let mut machine = Strontium::new();
+    	machine.add_instruction(Load { value: Numeric::Float { value: 2.2 }, register: 0 });
+    	machine.add_instruction(Load { value: Numeric::Float { value: 5.0 }, register: 1 });
+    	machine.add_instruction(Calculate { 
+    		method: CalculationMethod::Mul,
+    		number_type: 2,
+    		a: 0,
+    		b: 1,
+    		out: 2,
+    	});
+
+    	machine.execute().unwrap();
+    	machine.execute().unwrap();
+    	machine.execute().unwrap();
+
+    	assert_eq!(machine.registers.float[2], 11.0);
+    }
+
+    #[test]
+    fn execute_div() {
+    	let mut machine = Strontium::new();
+    	machine.add_instruction(Load { value: Numeric::UInt { value: 20 }, register: 0 });
+    	machine.add_instruction(Load { value: Numeric::UInt { value: 3 }, register: 1 });
+    	machine.add_instruction(Calculate { 
+    		method: CalculationMethod::Div,
+    		number_type: 1,
+    		a: 0,
+    		b: 1,
+    		out: 2,
+    	});
+
+    	machine.execute().unwrap();
+    	machine.execute().unwrap();
+    	machine.execute().unwrap();
+
+    	assert_eq!(machine.registers.uint[2], 6);
+    }
+
     #[test]
     fn execute_jump() {
     	let mut machine = Strontium::new();

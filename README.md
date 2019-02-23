@@ -33,10 +33,13 @@ The following tests have been implemented:
 * `bytecode::tests::convert_halt`
 * `bytecode::tests::convert_load`
 * `machine::tests::execute_add`
+* `machine::tests::execute_sub`
+* `machine::tests::execute_mul`
+* `machine::tests::execute_div`
 * `machine::tests::execute_halt`
 * `machine::tests::execute_load`
 * `machine::tests::execute_jump`
-* `machine::tests::execute_sub`
+
 
 ## License
 

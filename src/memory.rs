@@ -149,7 +149,12 @@ impl Memory {
 		                break;
 		            }
 		        }
-			}
+			},
+
+			GROW { amount }   => self.grow(amount as usize),
+			SHRINK { amount } => self.shrink(amount as usize)?,
+			SET { address } => self.set(address as usize, true),
+			UNSET { address } => self.unset(address as usize),
 		}
 
 		Ok(())

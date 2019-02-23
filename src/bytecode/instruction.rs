@@ -117,10 +117,10 @@ pub enum BitwiseMethod {
 	},
 
 	SET {
-		amount: u64,
+		address: u64,
 	},
 
 	UNSET {
-		amount: u64,
+		address: u64,
 	},
 }
