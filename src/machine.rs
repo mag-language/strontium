@@ -1,13 +1,11 @@
-//! This module contains the virtual machine that executes Poly bytecode. The VM uses a set of typed 
+//! This module contains the virtual machine that executes Strontium bytecode. The VM uses a set of typed 
 //! registers to do number arithmetic, and a memory vector provides the storage space for anything
 //! else.
 
 use crate::types::{Numeric};
 use super::bytecode::{Instruction, BitwiseMethod, ComparisonMethod, CalculationMethod};
 use super::bytecode::Instruction::*;
-use self::memory::Memory;
-
-pub mod memory;
+use super::memory::Memory;
 
 #[derive(Debug)]
 pub struct Registers {
@@ -26,7 +24,7 @@ impl Registers {
 	}
 }
 
-pub struct Poly {
+pub struct Strontium {
 	/// Holds a set of typed numeric values
 	pub registers: Registers,
 	/// Models memory as a vector of bits. This structure holds program-related data,
@@ -38,7 +36,7 @@ pub struct Poly {
 	pub index:     usize,
 }
 
-impl Poly {
+impl Strontium {
 	/// Create a new instance of the virtual machine
 	pub fn new() -> Self {
 		Self {
@@ -239,7 +237,7 @@ mod tests {
 
     #[test]
     fn execute_halt() {
-    	let mut machine = Poly::new();
+    	let mut machine = Strontium::new();
     	machine.add_instruction(Halt);
 
     	assert_eq!(machine.execute(), Ok(false))
@@ -248,7 +246,7 @@ mod tests {
     
     #[test]
     fn execute_load() {
-    	let mut machine = Poly::new();
+    	let mut machine = Strontium::new();
     	machine.add_instruction(Load { value: Numeric::UInt { value: 2000 }, register: 0 });
     	machine.execute().unwrap();
 
@@ -259,7 +257,7 @@ mod tests {
 
     #[test]
     fn execute_add() {
-    	let mut machine = Poly::new();
+    	let mut machine = Strontium::new();
     	machine.add_instruction(Load { value: Numeric::Float { value: 20.2 }, register: 0 });
     	machine.add_instruction(Load { value: Numeric::Float { value: 12.7 }, register: 1 });
     	machine.add_instruction(Calculate { 
@@ -279,7 +277,7 @@ mod tests {
 
     #[test]
     fn execute_sub() {
-    	let mut machine = Poly::new();
+    	let mut machine = Strontium::new();
     	machine.add_instruction(Load { value: Numeric::Int { value: 10 }, register: 0 });
     	machine.add_instruction(Load { value: Numeric::Int { value: 7 }, register: 1 });
     	machine.add_instruction(Calculate { 
@@ -299,7 +297,7 @@ mod tests {
 
     #[test]
     fn execute_jump() {
-    	let mut machine = Poly::new();
+    	let mut machine = Strontium::new();
     	machine.add_instruction(Load { value: Numeric::Int { value: 10 }, register: 0 });
     	machine.add_instruction(Load { value: Numeric::Int { value: 7 }, register: 1 });
     	machine.add_instruction(Calculate { 

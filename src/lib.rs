@@ -1,6 +1,6 @@
-pub mod assembler;
-pub mod instruction;
-pub mod memory;
+pub mod bytecode;
+pub mod types;
 pub mod machine;
+pub mod memory;
 
-pub use self::machine::Machine;
+pub use self::machine::Strontium;

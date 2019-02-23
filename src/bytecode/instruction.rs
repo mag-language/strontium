@@ -1,0 +1,110 @@
+use crate::types::Numeric;
+
+/// Represents a callable machine instruction
+#[derive(Debug, Clone)]
+pub enum Instruction {
+	/// Stop all further execution
+	Halt,
+
+	/// Load a numeric value into a register
+	Load {
+		value:    Numeric,
+		register: usize,
+	},
+
+	/// Perform a calculation on two registers and write the result to a third
+	Calculate {
+		method: CalculationMethod,
+		number_type: usize,
+		a:   usize,
+		b: 	 usize,
+		out: usize,
+	},
+
+	// Compare two registers and write the result to a third
+	Compare {
+		method: ComparisonMethod,
+		number_type: usize,
+		a:   usize,
+		b: 	 usize,
+		out: usize, 
+	},
+
+	// Perform a bitwise operation on at least one range of bits
+	Bitwise {
+		method: BitwiseMethod
+	},
+
+	/// Set the program counter to the given value
+	Jump {
+		destination: usize,
+	},
+
+	/// Set the program counter to a value if the given bit is set
+	JumpIf {
+		destination: usize,
+		conditional_bit: usize,
+	}
+}
+
+#[derive(Debug, Clone)]
+pub enum CalculationMethod {
+	Add,
+	Sub,
+	Mul,
+	Div,
+}
+
+#[derive(Debug, Clone)]
+pub enum ComparisonMethod {
+	EQ,
+	NEQ,
+	GT,
+	GTE,
+	LT,
+	LTE,
+}
+
+#[derive(Debug, Clone)]
+pub enum BitwiseMethod {
+	AND {
+		a: u64,
+		b: u64,
+		out: u64,
+		len: usize,
+	},
+
+	OR {
+		a: u64,
+		b: u64,
+		out: u64,
+		len: usize,
+	},
+
+	XOR {
+		a: u64,
+		b: u64,
+		out: u64,
+		len: usize,
+	},
+
+	NOT {
+		a: u64,
+		out: u64,
+		len: usize,
+	},
+
+	LSH {
+		a: u64,
+		out: u64,
+		amount: usize,
+		len: usize,
+	},
+	
+	RSH {
+		a: u64,
+		out: u64,
+		amount: usize,
+		len: usize,
+	}
+}
