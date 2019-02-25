@@ -1,7 +1,7 @@
 use crate::types::Numeric;
 
 /// Represents a callable machine instruction
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
 	/// Stop all further execution
 	Halt,
@@ -47,7 +47,7 @@ pub enum Instruction {
 	}
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CalculationMethod {
 	Add,
 	Sub,
@@ -55,7 +55,7 @@ pub enum CalculationMethod {
 	Div,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ComparisonMethod {
 	EQ,
 	NEQ,
@@ -65,7 +65,7 @@ pub enum ComparisonMethod {
 	LTE,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BitwiseMethod {
 	AND {
 		a: u64,
