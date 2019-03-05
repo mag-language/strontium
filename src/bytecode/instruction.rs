@@ -44,6 +44,23 @@ pub enum Instruction {
 	JumpIf {
 		destination: usize,
 		conditional_bit: usize,
+	},
+
+	Interrupt {
+		kind: InterruptKind,
+	}
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum InterruptKind {
+	/// Print the byte which starts at the given address in memory
+	Print {
+		address: u32
+	},
+
+	/// Read a byte and write it to memory
+	Read {
+		address: u32
 	}
 }
 

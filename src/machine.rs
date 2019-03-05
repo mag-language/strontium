@@ -3,7 +3,15 @@
 //! else.
 
 use crate::types::{Numeric};
-use super::bytecode::{Instruction, BitwiseMethod, ComparisonMethod, CalculationMethod};
+
+use super::bytecode::{
+	Instruction, 
+	BitwiseMethod, 
+	ComparisonMethod, 
+	CalculationMethod, 
+	InterruptKind,
+};
+
 use super::bytecode::Instruction::*;
 use super::memory::Memory;
 
@@ -88,6 +96,10 @@ impl Strontium {
 
 			JumpIf { destination, conditional_bit } => {
 				Ok(self.jump_if(*destination, *conditional_bit))
+			},
+
+			Interrupt { kind } => {
+				Ok(self.interrupt(kind.clone())?)
 			}
 		}
 	}
@@ -214,6 +226,10 @@ impl Strontium {
 
 		self.advance();
 
+		Ok(true)
+	}
+
+	fn interrupt(&mut self, kind: InterruptKind) -> Result<bool, String> {
 		Ok(true)
 	}
 

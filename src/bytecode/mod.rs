@@ -8,7 +8,7 @@ use crate::types::Numeric;
 use crate::types::Numeric::*;
 pub use self::instruction::Instruction;
 pub use self::instruction::Instruction::*;
-pub use self::instruction::{CalculationMethod, ComparisonMethod, BitwiseMethod};
+pub use self::instruction::{CalculationMethod, ComparisonMethod, BitwiseMethod, InterruptKind};
 
 //use std::io::Cursor;
 use byteorder::{LittleEndian, WriteBytesExt};
