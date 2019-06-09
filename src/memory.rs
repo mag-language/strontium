@@ -1,11 +1,11 @@
 use crate::bytecode::BitwiseMethod;
 use crate::bytecode::BitwiseMethod::*;
 
-/// A generic, very low-level structure for data and code storage. It has no concept of numbers or strings. Instead, it manipulates an array
-/// of bits. The basic operations can be used to store numbers or strings, compose methods like addition, multiplication, etc.
+/// A generic, low-level structure for data and code storage. It has no concept of numbers or strings. Instead, it manipulates an array
+/// of bytes. The basic operations can be used to store numbers or strings, compose methods like addition, multiplication, etc.
 /// This makes the module really versatile.
 pub struct Memory {
-	pub data: Vec<bool>
+	pub data: Vec<u8>
 }
 
 impl Memory {
@@ -17,38 +17,31 @@ impl Memory {
 	}
 
 	/// Load a memory snapshot and drop the content from before
-	pub fn load(&mut self, vec: &mut Vec<bool>) {
+	pub fn load(&mut self, vec: &mut Vec<u8>) {
 		self.data = vec.to_owned();
 	}
 
-	/// Add a vector of bits to the container
-	pub fn append(&mut self, vec: &mut Vec<bool>) {
+	/// Add a vector of bytes to the container
+	pub fn append(&mut self, vec: &mut Vec<u8>) {
 		self.data.append(vec);
 	}
 
 	/// Return the contents of the container
-	pub fn dump(&mut self) -> Vec<bool> {
+	pub fn dump(&mut self) -> Vec<u8> {
 		self.data.clone()
 	}
 
-	/// Set the given bit to 1
-	pub fn set(&mut self, a: usize, condition: bool) {
-		if condition {
-			self.data[a] = true;
-		}
-	}
-
-	/// Set the given bit to 0
-	pub fn unset(&mut self, a: usize) { 
-		self.data[a] = false; 
+	/// Set a byte to a given value
+	pub fn set(&mut self, address: usize, value: u8) {
+		self.data[address] = value;
 	}	
 
-	/// Grow the container by (n) bits
+	/// Grow the container by **n** bytes
 	pub fn grow(&mut self, amount: usize) { 
-		self.data.append(&mut vec![false; amount]); 
+		self.data.append(&mut vec![0; amount]); 
 	}
 
-	/// Shrink the container by (n) bits
+	/// Shrink the container by **n** bytes
 	pub fn shrink(&mut self, amount: usize) -> Result<(), &'static str> {
 		let length = self.data.len() as isize;
 
@@ -102,70 +95,29 @@ impl Memory {
 			},
 
 			LSH { a, out, amount, len } => {
-				// Create a temporary copy of the source range
-		        let mut bits: Vec<bool> = self.data[a as usize .. a as usize + len].to_vec();
+		        let out = out as usize;
+				let a   = a as usize;
 
-		        // Remove the first N elements
-		        for _ in 0 .. amount {
-		            bits.remove(0);
-		        }
-
-		        // Pad the right side with zeroes
-		        for _ in 0 .. amount {
-		            bits.push(false);
-		        }
-
-		        // Write the result to the second range
-		        for (i, bit) in bits.iter().enumerate() {
-		            if ((out as usize + i) as usize) < len {
-		                self.data[out as usize + i] = *bit;
-		            } else {
-		                break;
-		            }
-		        }
+				for offset in 0 .. len {
+					self.data[out + offset] = self.data[a + offset] << amount;
+				}
 			},
 
 			RSH { a, out, amount, len } => {
-				// Create a temporary copy of the source range
-		        let mut bits: Vec<bool> = self.data[a as usize .. a as usize + len].to_vec();
+				let out = out as usize;
+				let a   = a as usize;
 
-		        let sign_bit = bits[0];
-		        
-		        // Remove the last N elements
-		        for _ in 0 .. amount {
-		            bits.pop();
-		        }
-
-		        // Pad with the sign bit
-		        for _ in 0 .. amount {
-		            bits.insert(0, sign_bit);
-		        }
-
-		        // Write the result to the second range
-		        for (i, bit) in bits.iter().enumerate() {
-		            if ((out as usize + i) as usize) < len {
-		                self.data[out as usize + i] = *bit;
-		            } else {
-		                break;
-		            }
-		        }
+				for offset in 0 .. len {
+					self.data[out + offset] = self.data[a + offset] >> amount;
+				}
 			},
 
 			GROW { amount }   => self.grow(amount as usize),
 			SHRINK { amount } => self.shrink(amount as usize)?,
-			SET { address } => self.set(address as usize, true),
-			UNSET { address } => self.unset(address as usize),
+			SET { address, value } => self.set(address as usize, value),
 		}
 
 		Ok(())
-	}
-
-	pub fn is_set(&self, address: Address) -> bool {
-		self.data[address]
-	}	
-
-	pub fn is_unset(&self, address: Address) -> bool {
-		!self.data[address]
 	}
 }
 

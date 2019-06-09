@@ -135,9 +135,6 @@ pub enum BitwiseMethod {
 
 	SET {
 		address: u64,
-	},
-
-	UNSET {
-		address: u64,
+		value: u8,
 	},
 }

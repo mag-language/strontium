@@ -15,6 +15,7 @@ use super::bytecode::{
 use super::bytecode::Instruction::*;
 use super::memory::Memory;
 
+/// A set of signed and unsigned integers and floating point values
 #[derive(Debug)]
 pub struct Registers {
 	pub int:   [i64; 32],
@@ -61,7 +62,7 @@ impl Strontium {
 	}
 
 	/// Get a full slice of the memory vector
-	pub fn dump_memory(&self) -> &[bool] {
+	pub fn dump_memory(&self) -> &[u8] {
 		&self.memory.data[..]
 	}
  
@@ -130,7 +131,7 @@ impl Strontium {
 	}
 
 	fn jump_if(&mut self, destination: usize, pointer: usize) -> bool {
-		if self.memory.is_set(pointer) {
+		if self.memory.data[pointer] == 1 {
 			self.index = destination;
 		}
 
@@ -188,36 +189,36 @@ impl Strontium {
 			// int 
 			0 => {
 				match method {
-					ComparisonMethod::EQ  => self.memory.set(out, self.registers.int[a] == self.registers.int[b]),
-					ComparisonMethod::NEQ => self.memory.set(out, self.registers.int[a] != self.registers.int[b]),
-					ComparisonMethod::GT  => self.memory.set(out, self.registers.int[a] >  self.registers.int[b]),
-					ComparisonMethod::GTE => self.memory.set(out, self.registers.int[a] >= self.registers.int[b]),
-					ComparisonMethod::LT  => self.memory.set(out, self.registers.int[a] <  self.registers.int[b]),
-					ComparisonMethod::LTE => self.memory.set(out, self.registers.int[a] <= self.registers.int[b]),
+					ComparisonMethod::EQ  => self.memory.set(out, (self.registers.int[a] == self.registers.int[b]) as u8),
+					ComparisonMethod::NEQ => self.memory.set(out, (self.registers.int[a] != self.registers.int[b]) as u8),
+					ComparisonMethod::GT  => self.memory.set(out, (self.registers.int[a] >  self.registers.int[b]) as u8),
+					ComparisonMethod::GTE => self.memory.set(out, (self.registers.int[a] >= self.registers.int[b]) as u8),
+					ComparisonMethod::LT  => self.memory.set(out, (self.registers.int[a] <  self.registers.int[b]) as u8),
+					ComparisonMethod::LTE => self.memory.set(out, (self.registers.int[a] <= self.registers.int[b]) as u8),
 				}
 			},
 
 			// uint
 			1 => {
 				match method {
-					ComparisonMethod::EQ  => self.memory.set(out, self.registers.uint[a] == self.registers.uint[b]),
-					ComparisonMethod::NEQ => self.memory.set(out, self.registers.uint[a] != self.registers.uint[b]),
-					ComparisonMethod::GT  => self.memory.set(out, self.registers.uint[a] >  self.registers.uint[b]),
-					ComparisonMethod::GTE => self.memory.set(out, self.registers.uint[a] >= self.registers.uint[b]),
-					ComparisonMethod::LT  => self.memory.set(out, self.registers.uint[a] <  self.registers.uint[b]),
-					ComparisonMethod::LTE => self.memory.set(out, self.registers.uint[a] <= self.registers.uint[b]),
+					ComparisonMethod::EQ  => self.memory.set(out, (self.registers.uint[a] == self.registers.uint[b]) as u8),
+					ComparisonMethod::NEQ => self.memory.set(out, (self.registers.uint[a] != self.registers.uint[b]) as u8),
+					ComparisonMethod::GT  => self.memory.set(out, (self.registers.uint[a] >  self.registers.uint[b]) as u8),
+					ComparisonMethod::GTE => self.memory.set(out, (self.registers.uint[a] >= self.registers.uint[b]) as u8),
+					ComparisonMethod::LT  => self.memory.set(out, (self.registers.uint[a] <  self.registers.uint[b]) as u8),
+					ComparisonMethod::LTE => self.memory.set(out, (self.registers.uint[a] <= self.registers.uint[b]) as u8),
 				}
 			},
 
 			// float
 			2 => {
 				match method {
-					ComparisonMethod::EQ  => self.memory.set(out, self.registers.float[a] == self.registers.float[b]),
-					ComparisonMethod::NEQ => self.memory.set(out, self.registers.float[a] != self.registers.float[b]),
-					ComparisonMethod::GT  => self.memory.set(out, self.registers.float[a] >  self.registers.float[b]),
-					ComparisonMethod::GTE => self.memory.set(out, self.registers.float[a] >= self.registers.float[b]),
-					ComparisonMethod::LT  => self.memory.set(out, self.registers.float[a] <  self.registers.float[b]),
-					ComparisonMethod::LTE => self.memory.set(out, self.registers.float[a] <= self.registers.float[b]),
+					ComparisonMethod::EQ  => self.memory.set(out, (self.registers.float[a] == self.registers.float[b]) as u8),
+					ComparisonMethod::NEQ => self.memory.set(out, (self.registers.float[a] != self.registers.float[b]) as u8),
+					ComparisonMethod::GT  => self.memory.set(out, (self.registers.float[a] >  self.registers.float[b]) as u8),
+					ComparisonMethod::GTE => self.memory.set(out, (self.registers.float[a] >= self.registers.float[b]) as u8),
+					ComparisonMethod::LT  => self.memory.set(out, (self.registers.float[a] <  self.registers.float[b]) as u8),
+					ComparisonMethod::LTE => self.memory.set(out, (self.registers.float[a] <= self.registers.float[b]) as u8),
 				}
 			},
 
