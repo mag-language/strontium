@@ -1,29 +1,32 @@
+![Strontium](https://strontium.lyn.cloud/img/banner.png)
 
-<br />
+# What is Strontium?
 
-<center><img src="https://i.postimg.cc/bvqBkJb3/strontium-logo.png" alt="Strontium" /></center>
-<br />
-<center> <i>Please note that this project is still in an early stage, expect breaking changes.</i> </center>
+Strontium is a lightweight virtual machine for dynamically and statically typed programming languages. It operates on a set of typed registers, which each hold 32 numeric (`Int`, `UInt`, and `Float`) 64-bit values. A memory vector provides byte-wise storage for anything else.
 
-## What is Strontium?
+## Instruction Set Architecture
 
-Strontium is an embeddable process virtual machine for dynamically and statically typed programming languages. This crate provides the VM along with a bytecode format and parser. Strontium aims to be lightweight and to provide as much freedom to the language implementor as possible.
+A lightweight RISC-like instruction set is used to represent programs, favoring the **composition of functionality using basic functions** over new, custom instructions for specific tasks. The following is a list of all available instructions:
 
+| **Value**| **Instruction** | **Description**               
+| -------- | --------------- | ----------------------------
+|  `0x01`  | `HALT` 		 | Stop all execution instantly.
+|  `0x02`  | `LOAD`      	 | Load a `Int`, `UInt` or `Float` value into a register.
+|  `0x03`  | `MOVE` 		 | Move a value from a register to a memory location or vice versa. The first argument is the source, the second is the destination. Swap the arguments to change the direction. The source will be cleared after the operation.
+|  `0x04`  | `COPY` 		 | Copy a value from a register to a memory location or vice versa. The source will be left untouched.
+|  `0x05`  | `CALCULATE` 	 | Perform a calculation (`add`, `subtract`, `divide`, `multiply`) on two registers and write the result to a third. 
+|  `0x06`  | `COMPARE` 	     | Perform a comparison (`EQ`, `NEQ`, `LT`, `LTE`, `GT`, `GTE`) on two registers and write the result to a third.
+|  `0x07`  | `MEMORY` 	     | Perform a bitwise operation (`and`, `or`, `xor`, `not`, `lsh`, `rsh`) on two or three addresses, or perform a memory operation (`grow`, `shrink`, `set`, `unset`)
+|  `0x08`  | `JUMP` 	     | Set the program counter to a value from a location, using one of the methods (`absolute`, `forward`, `backward`)
+|  `0x09`  | `INTERRUPT` 	 | Emit a virtual hardware interrupt (`read`, `print`)
 
-
-### Features
-A _checked_ box indicates an implemented feature.
-
-* &nbsp;[ ✓ ] &nbsp;&nbsp;Number arithmetic on `Int`, `UInt` and `Float` registers
-* &nbsp;[ ✓ ] &nbsp;&nbsp;Bitwise arithmetic (`AND`, `OR`, `XOR`, `NOT`, `LSH`,  ...) on a sequence of bits
-* &nbsp;[ &nbsp;&nbsp;&nbsp;   ] &nbsp;&nbsp; JIT-compile bytecode to machine code using Cranelift
-* &nbsp;[ &nbsp;&nbsp;&nbsp;   ] &nbsp;&nbsp; Hardware Interrupts
+Details about the binary encoding of particular instructions can be found in the wiki.
 
 ### Status
 
-This project is still in an early stage of development.
-The current features work as expected, but there may be breaking changes in 
-the future.
+This project is still in an early stage of development and there may be breaking changes in 
+the future. Most of the listed instructions have been implemented, but interrupts, copy and move are still missing.
+
 Let's talk if you're interested on working on this project!
 
 ### Tests
