@@ -1,5 +1,6 @@
 stages:
   - build
+  - deploy
 
 rust-latest:
   stage: build
@@ -17,7 +18,7 @@ rust-nightly:
 
 pages:
   image: rust:latest
-  environment: staging
+  environment: deploy
   script:
   - cargo doc
   - mkdir public
