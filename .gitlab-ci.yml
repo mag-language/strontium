@@ -17,7 +17,7 @@ rust-nightly:
 
 pages:
   image: rust:latest
-  environment: build
+  stage: build
   script:
   - cargo doc
   - mkdir public
