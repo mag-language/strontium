@@ -19,7 +19,7 @@ A lightweight RISC-like instruction set is used to represent programs, favoring 
 |  `0x07`  | `MEMORY` 	     | Perform a bitwise operation (`AND`, `OR`, `XOR`, `NOT`, `LSH`, `RSH`) on two or three addresses, or perform a memory operation (`GROW`, `SHRINK`, `SET`, `UNSET`)
 |  `0x08`  | `JUMP` 	     | Set the program counter to a value from a location, using one of the methods (`absolute`, `forward`, `backward`)
 |  `0x09`  | `JUMPC` 	     | Set the program counter to a value from a location if the byte at a given address in memory has the value of `1`
-|  `0x10`  | `INTERRUPT` 	 | Emit a machine interrupt (`READ`, `PRINT`)
+|  `0x0A`  | `INTERRUPT` 	 | Emit a machine interrupt (`READ`, `PRINT`)
 
 Details about the binary encoding of particular instructions can be found in the wiki.
 
