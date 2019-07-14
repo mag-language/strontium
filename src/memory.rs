@@ -53,7 +53,7 @@ impl Memory {
 		}
 	}
 
-	pub fn compute(&mut self, method: BitwiseMethod) -> Result<(), String> {
+	pub fn compute(&mut self, method: BitwiseMethod) -> Result<(), StrontiumError> {
 		match method {
 			AND { a, b, out, len } => {
 				let out = out as usize;
@@ -121,4 +121,4 @@ impl Memory {
 	}
 }
 
-pub type   Address = usize;
+pub type Address = usize;
