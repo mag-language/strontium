@@ -162,7 +162,15 @@ impl Strontium {
 	}
 
 	fn move_value(&mut self, source: Location, destination: Location) -> bool {
+		match source {
+			Location::Register(register) => {
+				// match on destination and convert if needed
+			},
 
+			Location::Memory(address) => {
+				
+			}
+		}
 		true
 	}
 
@@ -242,7 +250,7 @@ mod tests {
 	use super::*;
 
     #[test]
-    fn execute_halt() {
+    fn halt_instruction() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::HALT);
@@ -251,7 +259,7 @@ mod tests {
     }
 
     #[test]
-    fn execute_load() {
+    fn load_instruction() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 1332.5, register: 5 });
@@ -261,7 +269,7 @@ mod tests {
     }
 
     #[test]
-    fn execute_add() {
+    fn add_instruction() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 44.7, register: 1 });
@@ -282,7 +290,7 @@ mod tests {
     }
 
     #[test]
-    fn execute_subtract() {
+    fn subtract_instruction() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 3452.37, register: 1 });
@@ -303,7 +311,7 @@ mod tests {
     }
 
     #[test]
-    fn execute_multiply() {
+    fn multiply_instruction() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 3.642, register: 1 });
@@ -324,7 +332,7 @@ mod tests {
     }
 
     #[test]
-    fn execute_divide() {
+    fn divide_instruction() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 12.534, register: 1 });
@@ -345,24 +353,36 @@ mod tests {
     }
 
     #[test]
-    fn execute_and() {
+    fn and_instruction() {
  		let mut machine = Strontium::new();
 
- 		machine.add_instruction(Instruction::LOAD { value: 12.534, register: 1 });
- 		machine.add_instruction(Instruction::LOAD { value: 8.388475294, register: 2 });
+ 		machine.add_instruction(Instruction::MEMORY {
+ 			method: MemoryMethod::GROW { amount: 3 }
+ 		});
 
- 		machine.add_instruction(Instruction::CALCULATE { 
- 			method: CalculationMethod::DIVIDE,
- 			operand1: 1,
- 			operand2: 2,
- 			destination: 3,
+ 		machine.add_instruction(Instruction::MEMORY {
+ 			method: MemoryMethod::SET { value: 3, address: 0 }
+ 		});
+
+ 		machine.add_instruction(Instruction::MEMORY {
+ 			method: MemoryMethod::SET { value: 7, address: 1 }
+ 		});
+
+ 		machine.add_instruction(Instruction::MEMORY { 
+ 			method: MemoryMethod::AND {
+ 				a: 0,
+ 				b: 1,
+ 				out: 2,
+ 				len: 1,
+ 			}
  		});
  		
  		machine.execute();
  		machine.execute();
  		machine.execute();
+ 		machine.execute();
 
- 		assert_eq!(machine.registers[3], 12.534 / 8.388475294);
+ 		assert_eq!(machine.memory.data[2], 3 & 7);
     }
 }
 
