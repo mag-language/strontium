@@ -1,6 +1,9 @@
-pub mod bytecode;
+#![feature(custom_attribute)]
+
+#[macro_use] extern crate pest_derive;
+
+pub mod assembler;
 pub mod types;
 pub mod machine;
-pub mod memory;
 
 pub use self::machine::Strontium;

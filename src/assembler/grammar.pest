@@ -1,0 +1,62 @@
+WHITESPACE = _{ "\n" | " " }
+
+ANY_NOT_RESERVED = _{ 
+  !(" " | 
+      "(" | 
+      ")" | 
+      "{" | 
+      "}" |
+      ":") 
+      ~ ANY }
+      
+Number = @{ ('0' .. '9')+ }
+Float = @{ ('0' .. '9')+ ~ (("." | ",") ~ ('0' .. '9')*) }
+Symbol = { ANY_NOT_RESERVED+ }
+Label = @{ ":" ~ Symbol }
+Hexadecimal = { (('0' .. '9') | ('A' .. 'F')){8} }
+
+Instruction = _{ Halt | Load | Move | Copy | Calculate | Compare | And | Or | Xor | Not | Lsh | Rsh | Grow | Shrink | Set | Unset }
+Program = _{ Instruction+ }
+
+Register = { ^"r" ~ Number }
+Length = { ^"l" ~ Number }
+Amount = { ^"a" ~ Number }
+Address = { "0x" ~ Hexadecimal }
+Byte = { "0x" ~ (('0' .. '9') | ('A' .. 'F')){2} }
+
+Halt = { ^"halt" }
+Load = { ^"load" ~ Register ~ Number }
+Move = { ^"move" ~ ((Address ~ Register) | (Register ~ Address)) }
+Copy = { ^"copy" ~ ((Address ~ Register) | (Register ~ Address)) }
+Calculate = { (^"add" | ^"subtract" | ^"multiply" | ^"divide") ~ Register ~ Register ~ Register }
+Compare = { CompareMethod ~ Register ~ Register ~ Address }
+
+And = { ^"and" ~ Length ~ Address ~ Address ~ Address }
+Or = { ^"or" ~ Length ~ Address ~ Address ~ Address }
+Xor = { ^"xor" ~ Length ~ Address ~ Address ~ Address }
+Not = { ^"not" ~ Length ~ Address ~ Address }
+Lsh = { ^"lsh" ~ Length ~ Amount ~ Address ~ Address }
+Rsh = { ^"rsh" ~ Length ~ Amount ~ Address ~ Address }
+Grow = { ^"grow" ~ Number }
+Shrink = { ^"shrink" ~ Number }
+Set = { ^"set" ~ Address ~ Byte }
+Unset = { ^"unset" ~ Address }
+
+CompareMethod = _{
+	Eq |
+    Neq |
+    Gt |
+    Gte |
+    Lt |
+    Lte
+}
+
+Eq = { ^"eq" }
+Neq = { ^"neq" }
+Gt = { ^"gt" }
+Gte = { ^"gte" }
+Lt = { ^"lt" }
+Lte = { ^"lte" }
+
+
+
