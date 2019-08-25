@@ -65,6 +65,30 @@ pub enum Instruction {
 	/// Set off a hardware interrupt, for example to print a character to standard output
 	INTERRUPT {
 		interrupt: Interrupt,
+	},
+
+	/// Push a pointer value onto the call stack
+	PUSH {
+		value: MemoryAddress,
+	},
+
+	/// Remove the most recent call stack value
+	POP,
+
+	/// Set the virtual machine's last known point to the current
+	/// program counter, push the address and arguments of 
+	/// the function to be called onto the stack, and set the
+	/// program counter to the function pointer.
+	CALL {
+		function_pointer: MemoryAddress,
+		arguments: Vec<MemoryAddress>,
+	},
+
+	/// Restore the program counter from the last known point, then 
+	/// pop the function pointer and arguments off the stack
+	RETURN {
+		/// Specifies how many arguments should be popped off the stack
+		argument_count: u32,
 	}
 }
 
