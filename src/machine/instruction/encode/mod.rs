@@ -5,7 +5,6 @@ use super::MemoryMethod::*;
 use crate::types::Location;
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use std::mem;
 
 impl Into<Vec<u8>> for Instruction {
 	fn into(self) -> Vec<u8> {
