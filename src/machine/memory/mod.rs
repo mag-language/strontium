@@ -116,7 +116,7 @@ impl Memory {
 			GROW { amount }   => self.grow(amount as usize),
 			SHRINK { amount } => self.shrink(amount as usize)?,
 			SET { address, value } => self.set(address as usize, value),
-			UNSET { address } => {},
+			UNSET { address } => self.set(address as usize, 0),
 		}
 
 		Ok(())
