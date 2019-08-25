@@ -7,3 +7,4 @@ pub mod types;
 pub mod machine;
 
 pub use self::machine::Strontium;
+pub use self::machine::instruction::Instruction;
