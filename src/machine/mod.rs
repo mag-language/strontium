@@ -1,7 +1,7 @@
 //! This module contains the virtual machine which executes Strontium bytecode. The VM uses a set of typed 
 //! registers to do number arithmetic, and a memory vector provides the storage space for anything else.
 
-use crate::types::{RegisterAddress, MemoryAddress, Location};
+use crate::types::{MemoryAddress, Location};
 
 pub mod memory;
 pub mod instruction;
@@ -49,22 +49,29 @@ pub struct Strontium {
 	/// Holds 64 64-bit floating point values
 	pub registers: [f64; NUM_REGISTERS],
 	/// Models memory as a vector of bits. This structure holds program-related data,
-	/// and will probably be replaced by a more complex, paged structure later on.
+	/// and will probably be replaced by a more complex, paged structure later on
 	pub memory:    Memory,
 	/// Contains the parsed bytecode
 	pub program:   Vec<Instruction>,
 	/// Our current position in the program
 	pub index:     usize,
+	/// Contains references for function arguments and return values
+	call_stack: Vec<MemoryAddress>,
+	/// References the bytecode position the VM should go to after returning from a
+	/// function
+	last_known_point: usize,
 }
 
 impl Strontium {
 	/// Create a new instance of the virtual machine
 	pub fn new() -> Self {
 		Self {
-			registers: [0.0; NUM_REGISTERS],
-			memory:    Memory::new(),
-			program:   vec![],
-			index:     0,
+			registers:  [0.0; NUM_REGISTERS],
+			memory:     Memory::new(),
+			program:    vec![],
+			index:      0,
+			call_stack: vec![],
+			last_known_point: 0,
 		}
 	}
 
@@ -91,31 +98,31 @@ impl Strontium {
 
 			LOAD { value, register } => {
 				Ok(
-					self.load(*value, *register as usize)?
+					self.load(value, register as usize)?
 				)
 			},
 
 			MOVE { source, destination } => {
 				Ok(
-					self.move_value(*source, *destination)
+					self.move_value(source, destination)
 				)
 			},
 
 			COPY { source, destination } => {
 				Ok(
-					self.copy_value(*source, *destination)
+					self.copy_value(source, destination)
 				)
 			},
 
 			CALCULATE { method, operand1, operand2, destination } => {
 				Ok(
-					self.calculate(method.clone(), *operand1 as usize, *operand2 as usize, *destination as usize)?
+					self.calculate(method.clone(), operand1 as usize, operand2 as usize, destination as usize)?
 				)
 			},
 			
 			COMPARE { method, operand1, operand2, destination } => {
 				Ok(
-					self.compare(method.clone(), *operand1 as usize, *operand2 as usize, *destination as usize)?
+					self.compare(method.clone(), operand1 as usize, operand2 as usize, destination as usize)?
 				)
 			},
 
@@ -127,13 +134,13 @@ impl Strontium {
 
 			JUMP { destination } => {
 				Ok(
-					self.jump(*destination)
+					self.jump(destination)
 				)
 			},
 
 			JUMPC { destination, conditional_address } => {
 				Ok(
-					self.jumpc(*destination, *conditional_address)
+					self.jumpc(destination, conditional_address)
 				)
 			},
 
@@ -141,7 +148,37 @@ impl Strontium {
 				Ok(
 					self.interrupt(interrupt.clone())?
 				)
-			}
+			},
+
+			PUSH { value } => {
+				self.call_stack.push(value);
+
+				Ok(true)
+			},
+
+			POP => {
+				self.call_stack.pop();
+
+				Ok(true)
+			},
+
+			CALL { function_pointer, arguments } => {
+				// Save the position we're gonna return to later
+				self.last_known_point = self.index;
+
+				// Push function arguments onto the stack
+				for arg in arguments {
+					self.call_stack.push(arg);
+				}
+
+				// Set the program counter to the start of the called function
+				self.index = function_pointer as usize;
+
+				Ok(true)
+			},
+				
+
+			_ => unimplemented!(),
 		}
 	}
 
@@ -162,20 +199,12 @@ impl Strontium {
 	}
 
 	fn move_value(&mut self, source: Location, destination: Location) -> bool {
-		match source {
-			Location::Register(register) => {
-				// match on destination and convert if needed
-			},
-
-			Location::Memory(address) => {
-				
-			}
-		}
+		println!("The MOVE instruction has not yet been implemented");
 		true
 	}
 
-	fn copy_value(&mut self, source: Location, destination: Location) -> bool {
-
+	fn copy_value(&mut self, _source: Location, _destination: Location) -> bool {
+		println!("The COPY instruction has not yet been implemented");
 		true
 	}
 
@@ -231,8 +260,8 @@ impl Strontium {
 		Ok(true)
 	}
 
-	fn peek(&self) -> &Instruction {
-		&self.program[self.index]
+	fn peek(&self) -> Instruction {
+		self.program[self.index].clone()
 	}
 
 	fn advance(&mut self) -> bool {
