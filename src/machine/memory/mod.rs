@@ -124,3 +124,111 @@ impl Memory {
 }
 
 pub type   Address = usize;
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+    #[test]
+    fn grow() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 4 }).unwrap();
+
+    	assert_eq!(memory.data.len(), 4)
+    }
+
+    #[test]
+    fn shrink() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 4 }).unwrap();
+    	memory.compute(SHRINK { amount: 3 }).unwrap();
+
+    	assert_eq!(memory.data.len(), 1)
+    }
+
+    #[test]
+    fn set() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 4 }).unwrap();
+    	memory.compute(SET { address: 2, value: 64 }).unwrap();
+
+    	assert_eq!(memory.data[2], 64)
+    }
+
+    #[test]
+    fn unset() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 4 }).unwrap();
+    	memory.compute(SET { address: 2, value: 111 }).unwrap();
+    	memory.compute(UNSET { address: 2 }).unwrap();
+
+    	assert_eq!(memory.data[2], 0)
+    }
+
+    #[test]
+    fn or() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 8 }).unwrap();
+    	memory.compute(SET { address: 2, value: 111 }).unwrap();
+    	memory.compute(SET { address: 3, value: 78 }).unwrap();
+    	memory.compute(OR { a: 2, b: 3, out: 4, len: 1 }).unwrap();
+
+    	assert_eq!(memory.data[4], 111 | 78)
+    }
+
+    #[test]
+    fn and() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 8 }).unwrap();
+    	memory.compute(SET { address: 2, value: 111 }).unwrap();
+    	memory.compute(SET { address: 3, value: 78 }).unwrap();
+    	memory.compute(AND { a: 2, b: 3, out: 4, len: 1 }).unwrap();
+
+    	assert_eq!(memory.data[4], 111 & 78)
+    }
+
+    #[test]
+    fn xor() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 8 }).unwrap();
+    	memory.compute(SET { address: 2, value: 65 }).unwrap();
+    	memory.compute(SET { address: 3, value: 223 }).unwrap();
+    	memory.compute(XOR { a: 2, b: 3, out: 4, len: 1 }).unwrap();
+
+    	assert_eq!(memory.data[4], 65 ^ 223)
+    }
+
+    #[test]
+    fn not() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 8 }).unwrap();
+    	memory.compute(SET { address: 2, value: 65 }).unwrap();
+    	memory.compute(SET { address: 3, value: 128 }).unwrap();
+    	memory.compute(NOT { a: 2,  out: 4, len: 2 }).unwrap();
+
+    	assert_eq!(memory.data[4], !65);
+    	assert_eq!(memory.data[5], !128);
+    }
+
+    #[test]
+    fn shift() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 8 }).unwrap();
+    	memory.compute(SET { address: 2, value: 65 }).unwrap();
+    	memory.compute(SET { address: 4, value: 128 }).unwrap();
+    	memory.compute(LSH { a: 2, out: 3, amount: 2, len: 1 }).unwrap();
+    	memory.compute(RSH { a: 4, out: 5, amount: 6, len: 1 }).unwrap();
+
+    	assert_eq!(memory.data[3], 65 << 2);
+    	assert_eq!(memory.data[5], 128 >> 6);
+    }
+}
