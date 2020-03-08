@@ -16,6 +16,8 @@ use self::instruction::{
 	Interrupt,
 };
 
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+
 /*/// A set of signed and unsigned integers and floating point values
 #[derive(Debug)]
 pub struct Registers {
@@ -35,10 +37,10 @@ impl Registers {
 
 #[derive(Debug, PartialEq)]
 pub enum StrontiumError {
-	Overflow,
+	/// A division by zero has occured.
 	DivisionByZero,
-	// Raised when the memory size is shrinked to a number lower than zero
-	InvalidMemorySize,
+	/// An invalid memory or register address has been accessed.
+	OutOfBounds,
 	Other(String),
 }
 
@@ -48,7 +50,7 @@ const NUM_REGISTERS: usize = 64;
 pub struct Strontium {
 	/// Holds 64 64-bit floating point values
 	pub registers: [f64; NUM_REGISTERS],
-	/// Models memory as a vector of bits. This structure holds program-related data,
+	/// Models memory as a vector of bytes. This structure holds program-related data,
 	/// and will probably be replaced by a more complex, paged structure later on
 	pub memory:    Memory,
 	/// Contains the parsed bytecode
@@ -56,10 +58,7 @@ pub struct Strontium {
 	/// Our current position in the program
 	pub index:     usize,
 	/// Contains references for function arguments and return values
-	call_stack: Vec<MemoryAddress>,
-	/// References the bytecode position the VM should go to after returning from a
-	/// function
-	last_known_point: usize,
+	pub call_stack:    Vec<MemoryAddress>,
 }
 
 impl Strontium {
@@ -71,7 +70,6 @@ impl Strontium {
 			program:    vec![],
 			index:      0,
 			call_stack: vec![],
-			last_known_point: 0,
 		}
 	}
 
@@ -84,7 +82,7 @@ impl Strontium {
 	pub fn dump_memory(&self) -> &[u8] {
 		&self.memory.data[..]
 	}
- 
+
 	/// Execute a single instruction
 	pub fn execute(&mut self) -> Result<bool, StrontiumError> {
 		let instruction = self.peek();
@@ -104,7 +102,7 @@ impl Strontium {
 
 			MOVE { source, destination } => {
 				Ok(
-					self.move_value(source, destination)
+					self.move_value(source, destination)?
 				)
 			},
 
@@ -149,36 +147,6 @@ impl Strontium {
 					self.interrupt(interrupt.clone())?
 				)
 			},
-
-			PUSH { value } => {
-				self.call_stack.push(value);
-
-				Ok(true)
-			},
-
-			POP => {
-				self.call_stack.pop();
-
-				Ok(true)
-			},
-
-			CALL { function_pointer, arguments } => {
-				// Save the position we're gonna return to later
-				self.last_known_point = self.index;
-
-				// Push function arguments onto the stack
-				for arg in arguments {
-					self.call_stack.push(arg);
-				}
-
-				// Set the program counter to the start of the called function
-				self.index = function_pointer as usize;
-
-				Ok(true)
-			},
-				
-
-			_ => unimplemented!(),
 		}
 	}
 
@@ -190,7 +158,7 @@ impl Strontium {
 		if register <= NUM_REGISTERS {
 			self.registers[register] = value;
 		} else {
-			return Err(StrontiumError::Overflow);
+			return Err(StrontiumError::OutOfBounds);
 		}
 		
 		self.advance();
@@ -198,9 +166,61 @@ impl Strontium {
 		Ok(true)
 	}
 
-	fn move_value(&mut self, source: Location, destination: Location) -> bool {
-		println!("The MOVE instruction has not yet been implemented");
-		true
+	fn move_value(&mut self, source: Location, destination: Location) -> Result<bool, StrontiumError> {
+		match source {
+			Location::Memory(src_address) => {
+				match destination {
+					Location::Memory(dest_address)   => {
+						self.memory.compute(MemoryMethod::SET_RANGE {
+							address: dest_address,
+							values:  self.memory.range(src_address as usize .. src_address as usize + 8)?.to_vec(),
+						})?;
+					},
+
+					Location::Register(dest_address)   => {
+						if dest_address as usize <= NUM_REGISTERS {
+							let mut range = self.memory.range(src_address as usize .. src_address as usize + 8)?;
+
+							self.registers[dest_address as usize] = range.read_f64::<LittleEndian>()
+        						.expect("Cannot read f64 value from memory");
+						} else {
+							return Err(StrontiumError::OutOfBounds)
+						}
+					},
+				}
+			},
+
+			Location::Register(src_address) => {
+				match destination {
+					Location::Memory(dest_address)   => {
+						if src_address  as usize <= NUM_REGISTERS {
+							let mut  values = vec![];
+
+							values
+								.write_f64::<LittleEndian>(self.registers[src_address as usize])
+								.expect("Cannot write f64 value to temporary buffer");
+
+							self.memory.compute(MemoryMethod::SET_RANGE {
+								address: dest_address,
+								values,
+							})?;
+						} else {
+							return Err(StrontiumError::OutOfBounds)
+						}
+					},
+					Location::Register(dest_address) => {
+						if    src_address  as usize <= NUM_REGISTERS 
+						   && dest_address as usize <= NUM_REGISTERS {
+						   	self.registers[src_address as usize] = self.registers[dest_address as usize];
+						} else {
+							return Err(StrontiumError::OutOfBounds)
+						}
+					},
+				}
+			}
+		}
+		
+		Ok(true)
 	}
 
 	fn copy_value(&mut self, _source: Location, _destination: Location) -> bool {
@@ -225,6 +245,8 @@ impl Strontium {
 	fn bitwise(&mut self, method: MemoryMethod) -> Result<bool, StrontiumError> {
 		self.memory.compute(method)?;
 
+		self.advance();
+
 		Ok(true)
 	}
 
@@ -234,6 +256,8 @@ impl Strontium {
 			CalculationMethod::SUBTRACT => self.registers[destination] = self.registers[a] - self.registers[b],
 			CalculationMethod::MULTIPLY => self.registers[destination] = self.registers[a] * self.registers[b],
 			CalculationMethod::DIVIDE 	=> self.registers[destination] = self.registers[a] / self.registers[b],
+			CalculationMethod::POWER 	=> self.registers[destination] = self.registers[a].powf(self.registers[b]),
+			CalculationMethod::MODULO 	=> self.registers[destination] = self.registers[a] % self.registers[b],
 		}
 
 		self.advance();
@@ -256,7 +280,7 @@ impl Strontium {
 		Ok(true)
 	}
 
-	fn interrupt(&mut self, kind: Interrupt) -> Result<bool, StrontiumError> {
+	fn interrupt(&mut self, _kind: Interrupt) -> Result<bool, StrontiumError> {
 		Ok(true)
 	}
 
@@ -279,7 +303,7 @@ mod tests {
 	use super::*;
 
     #[test]
-    fn halt_instruction() {
+    fn halt() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::HALT);
@@ -288,17 +312,18 @@ mod tests {
     }
 
     #[test]
-    fn load_instruction() {
+    fn load() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 1332.5, register: 5 });
- 		machine.execute();
+
+ 		machine.execute().unwrap();
 
  		assert_eq!(machine.registers[5], 1332.5);
     }
 
     #[test]
-    fn add_instruction() {
+    fn add() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 44.7, register: 1 });
@@ -311,15 +336,15 @@ mod tests {
  			destination: 3,
  		});
 
- 		machine.execute();
- 		machine.execute();
- 		machine.execute();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
 
  		assert_eq!(machine.registers[3], 44.7 + 36.8);
     }
 
     #[test]
-    fn subtract_instruction() {
+    fn subtract() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 3452.37, register: 1 });
@@ -332,15 +357,15 @@ mod tests {
  			destination: 3,
  		});
  		
- 		machine.execute();
- 		machine.execute();
- 		machine.execute();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
 
  		assert_eq!(machine.registers[3], 3452.37 - 3685.8148);
     }
 
     #[test]
-    fn multiply_instruction() {
+    fn multiply() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 3.642, register: 1 });
@@ -353,15 +378,15 @@ mod tests {
  			destination: 3,
  		});
  		
- 		machine.execute();
- 		machine.execute();
- 		machine.execute();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
 
  		assert_eq!(machine.registers[3], 3.642 * 2.46682);
     }
 
     #[test]
-    fn divide_instruction() {
+    fn divide() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::LOAD { value: 12.534, register: 1 });
@@ -374,44 +399,88 @@ mod tests {
  			destination: 3,
  		});
  		
- 		machine.execute();
- 		machine.execute();
- 		machine.execute();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
 
  		assert_eq!(machine.registers[3], 12.534 / 8.388475294);
     }
 
     #[test]
-    fn and_instruction() {
+    fn power() {
+ 		let mut machine = Strontium::new();
+
+ 		machine.add_instruction(Instruction::LOAD { value: 3.141592, register: 1 });
+ 		machine.add_instruction(Instruction::LOAD { value: 4.0, register: 2 });
+
+ 		machine.add_instruction(Instruction::CALCULATE { 
+ 			method: CalculationMethod::POWER,
+ 			operand1: 1,
+ 			operand2: 2,
+ 			destination: 3,
+ 		});
+ 		
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+
+ 		assert_eq!(machine.registers[3], (3.141592 as f64).powf(4.0));
+    }
+
+    #[test]
+    fn modulo() {
+ 		let mut machine = Strontium::new();
+
+ 		machine.add_instruction(Instruction::LOAD { value: 3.141592, register: 1 });
+ 		machine.add_instruction(Instruction::LOAD { value: 4.0, register: 2 });
+
+ 		machine.add_instruction(Instruction::CALCULATE { 
+ 			method: CalculationMethod::MODULO,
+ 			operand1: 1,
+ 			operand2: 2,
+ 			destination: 3,
+ 		});
+ 		
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+
+ 		assert_eq!(machine.registers[3], 3.141592 % 4.0);
+    }
+
+    #[test]
+    fn and() {
  		let mut machine = Strontium::new();
 
  		machine.add_instruction(Instruction::MEMORY {
- 			method: MemoryMethod::GROW { amount: 3 }
+ 			method: MemoryMethod::GROW { amount: 8 }
  		});
 
  		machine.add_instruction(Instruction::MEMORY {
- 			method: MemoryMethod::SET { value: 3, address: 0 }
+ 			method: MemoryMethod::SET { value: 3, address: 2 }
  		});
 
  		machine.add_instruction(Instruction::MEMORY {
- 			method: MemoryMethod::SET { value: 7, address: 1 }
+ 			method: MemoryMethod::SET { value: 7, address: 3 }
  		});
 
  		machine.add_instruction(Instruction::MEMORY { 
  			method: MemoryMethod::AND {
- 				a: 0,
- 				b: 1,
- 				out: 2,
+ 				a: 2,
+ 				b: 3,
+ 				out: 4,
  				len: 1,
  			}
  		});
  		
- 		machine.execute();
- 		machine.execute();
- 		machine.execute();
- 		machine.execute();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
+ 		machine.execute().unwrap();
 
- 		assert_eq!(machine.memory.data[2], 3 & 7);
+ 		println!("{:?}", machine.memory.data);
+
+ 		assert_eq!(machine.memory.data[4], 3 & 7);
     }
 }
 
