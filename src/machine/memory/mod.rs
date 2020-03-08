@@ -32,10 +32,29 @@ impl Memory {
 		self.data.clone()
 	}
 
+	/// Return a slice of the memory vector
+	pub fn range(&self, range: std::ops::Range<usize>) -> Result<&[u8], StrontiumError> {
+		// We don't check for indexes lower than zero here 
+		// because the `usize` type can never be negative.
+		if range.end < self.data.len() {
+			Ok(&self.data[range])
+		} else {
+			Err(StrontiumError::OutOfBounds)
+		}
+	}
+
 	/// Set a byte to a given value
 	pub fn set(&mut self, address: usize, value: u8) {
 		self.data[address] = value;
-	}	
+	}
+
+	/// Set a range of bytes
+	pub fn set_range(&mut self, mut address: usize, values: Vec<u8>) {
+		for value in values {
+			self.set(address, value);
+			address += 1;
+		}
+	}		
 
 	/// Grow the container by **n** bytes
 	pub fn grow(&mut self, amount: usize) { 
@@ -50,10 +69,11 @@ impl Memory {
 			self.data.truncate(length as usize - amount);
 			Ok(())
 		} else {
-			Err(StrontiumError::InvalidMemorySize)
+			Err(StrontiumError::OutOfBounds)
 		}
 	}
 
+	/// Apply bitwise operations on ranges of bytes, or grow/shrink the container
 	pub fn compute(&mut self, method: MemoryMethod) -> Result<(), StrontiumError> {
 		match method {
 			AND { a, b, out, len } => {
@@ -116,6 +136,7 @@ impl Memory {
 			GROW { amount }   => self.grow(amount as usize),
 			SHRINK { amount } => self.shrink(amount as usize)?,
 			SET { address, value } => self.set(address as usize, value),
+			SET_RANGE { address, values } => self.set_range(address as usize, values),
 			UNSET { address } => self.set(address as usize, 0),
 		}
 
@@ -156,6 +177,16 @@ mod tests {
     	memory.compute(SET { address: 2, value: 64 }).unwrap();
 
     	assert_eq!(memory.data[2], 64)
+    }
+
+    #[test]
+    fn set_range() {
+    	let mut memory = Memory::new();
+
+    	memory.compute(GROW { amount: 4 }).unwrap();
+    	memory.compute(SET_RANGE { address: 0, values: vec![24, 42, 127, 255] }).unwrap();
+
+    	assert_eq!(&memory.data[..], &[24, 42, 127, 255])
     }
 
     #[test]
