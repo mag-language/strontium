@@ -49,7 +49,7 @@ pub fn parse(input: String) -> Vec<Instruction> {
 
     }
 
-    vec![]
+    accumulator
 }
 
 #[cfg(test)]
