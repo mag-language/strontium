@@ -8,7 +8,7 @@ Strontium is a lightweight virtual machine for dynamically and statically typed 
 
 A lightweight RISC-like instruction set is used to represent programs. Strontium favors the composition of functionality using basic functions over the creation of new, custom instructions for specific tasks. The following is a list of all 10 available instructions:
 
-| **Value**| **Instruction** | **Description**               
+| **Opcode**| **Instruction** | **Description**               
 | -------- | --------------- | ----------------------------
 |  `0x01`  | `HALT` 		 | Stop all execution instantly.
 |  `0x02`  | `LOAD`      	 | Load a floating-point value into a register.
