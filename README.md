@@ -1,4 +1,4 @@
-![Strontium](https://i.imgur.com/llRVjQX.png)
+![Strontium](https://i.imgur.com/cKsPKPh.png)
 
 # What is Strontium?
 
