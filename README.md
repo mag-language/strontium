@@ -1,4 +1,4 @@
-![Strontium](https://strontium.lyn.cloud/img/banner.png)
+![Strontium](https://i.imgur.com/llRVjQX.png)
 
 # What is Strontium?
 
