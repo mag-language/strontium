@@ -1,15 +1,19 @@
 //! This module contains the virtual machine which executes Strontium bytecode. The VM uses a set of typed 
-//! registers to do number arithmetic, and a memory vector provides the storage space for anything else.
+//! registers to do number arithmetic, a memory vector provides the storage space for anything else.
 
 use crate::types::{MemoryAddress, Location};
 
 pub mod memory;
 pub mod instruction;
+pub mod opcode;
 
 use self::memory::Memory;
+
+use self::opcode::Opcode;
+use self::opcode::Opcode::*;
+
 use self::instruction::{
 	Instruction,
-	Instruction::*,
 	MemoryMethod, 
 	ComparisonMethod, 
 	CalculationMethod, 
@@ -50,15 +54,14 @@ const NUM_REGISTERS: usize = 64;
 pub struct Strontium {
 	/// Holds 64 64-bit floating point values
 	pub registers: [f64; NUM_REGISTERS],
-	/// Models memory as a vector of bytes. This structure holds program-related data,
-	/// and will probably be replaced by a more complex, paged structure later on
+	/// Models memory as a vector of bytes. This structure holds the 
+	/// program and related data.
 	pub memory:    Memory,
-	/// Contains the parsed bytecode
-	pub program:   Vec<Instruction>,
-	/// Our current position in the program
-	pub index:     usize,
+	/// An instruction pointer that indicates the current position in the program memory.
+	pub ip:        usize,
 	/// Contains references for function arguments and return values
 	pub call_stack:    Vec<MemoryAddress>,
+	should_continue: bool,
 }
 
 impl Strontium {
@@ -67,15 +70,10 @@ impl Strontium {
 		Self {
 			registers:  [0.0; NUM_REGISTERS],
 			memory:     Memory::new(),
-			program:    vec![],
-			index:      0,
+			ip:      	0,
 			call_stack: vec![],
+			should_continue: true,
 		}
-	}
-
-	/// Append an instruction to the program vector
-	pub fn add_instruction(&mut self, instruction: Instruction) {
-		self.program.push(instruction);
 	}
 
 	/// Get a full slice of the memory vector
@@ -83,40 +81,95 @@ impl Strontium {
 		&self.memory.data[..]
 	}
 
+	pub fn push_bytecode(&mut self, bytes: &[u8]) {
+		if (self.ip + bytes.len() <= self.memory.data.len()) {
+			// We have enough space in memory to add the new code.
+			self.memory.set_range(self.ip, bytes.to_vec());
+		} else {
+			// We calculate the needed space, grow memory and then add the new code.
+			self.memory.grow(self.ip + bytes.len() - self.memory.data.len());
+			self.memory.set_range(self.ip, bytes.to_vec());
+		}
+	}
+
+	pub fn execute_until_halt(&mut self) -> Result<bool, StrontiumError> {
+		self.should_continue = true;
+
+		while self.should_continue {
+			self.execute()?;
+		}
+
+		Ok(true)
+	}
+
+	pub fn consume_f64(&mut self) -> Result<f64, StrontiumError> {
+		if (self.ip + 7 <= self.memory.data.len()) {
+			// We have enough space in memory to add the new code.
+			let mut bytes = self.memory.range(self.ip .. self.ip + 8).unwrap();
+
+			let float = bytes
+        			.read_f64::<LittleEndian>()
+        			.expect("Unable to read f64 value");
+
+			Ok(float)
+		} else {
+			Err(StrontiumError::OutOfBounds)
+		}
+	}
+
+	pub fn consume_u64(&mut self) -> Result<u64, StrontiumError> {
+		if (self.ip + 7 <= self.memory.data.len()) {
+			// We have enough space in memory to add the new code.
+			let mut bytes = self.memory.range(self.ip .. self.ip + 8).unwrap();
+
+			let int = bytes
+        			.read_u64::<LittleEndian>()
+        			.expect("Unable to read u64 value");
+
+			Ok(int)
+		} else {
+			Err(StrontiumError::OutOfBounds)
+		}
+	}
+
+	pub fn consume_u16(&mut self) -> Result<u16, StrontiumError> {
+		if (self.ip + 7 <= self.memory.data.len()) {
+			// We have enough space in memory to add the new code.
+			let mut bytes = self.memory.range(self.ip .. self.ip + 8).unwrap();
+
+			let int = bytes
+        			.read_u16::<LittleEndian>()
+        			.expect("Unable to read u16 value");
+
+			Ok(int)
+		} else {
+			Err(StrontiumError::OutOfBounds)
+		}
+	}
+
 	/// Execute a single instruction
 	pub fn execute(&mut self) -> Result<bool, StrontiumError> {
-		let instruction = self.peek();
+		let byte = self.peek();
 
-		match instruction {
+		let opcode: Opcode = byte.into();
+
+		self.should_continue = match opcode {
 			HALT => {
-				Ok(
-					self.halt()
-				)
+				println!("Halt signal received");
+				false
+			},
+			LOAD => {
+				let register = self.consume_u16()?;
+				let value = self.consume_f64()?;
+
+				self.registers[register as usize] = value;
+				true
 			},
 
-			LOAD { value, register } => {
-				Ok(
-					self.load(value, register as usize)?
-				)
-			},
-
-			MOVE { source, destination } => {
-				Ok(
-					self.move_value(source, destination)?
-				)
-			},
-
-			COPY { source, destination } => {
-				Ok(
-					self.copy_value(source, destination)
-				)
-			},
-
-			CALCULATE { method, operand1, operand2, destination } => {
-				Ok(
-					self.calculate(method.clone(), operand1 as usize, operand2 as usize, destination as usize)?
-				)
-			},
+			/*
+			MOVE => self.move_value(source, destination)?,
+			COPY => self.copy_value(source, destination),
+			CALCULATE => self.calculate(method.clone(), operand1 as usize, operand2 as usize, destination as usize)?),
 			
 			COMPARE { method, operand1, operand2, destination } => {
 				Ok(
@@ -146,15 +199,18 @@ impl Strontium {
 				Ok(
 					self.interrupt(interrupt.clone())?
 				)
-			},
-		}
+			},*/
+
+			_ => {
+				println!("unimplemented");
+				true
+			}
+		};
+
+		Ok(self.should_continue)
 	}
 
-	fn halt(&mut self) -> bool {
-		false
-	}
-
-	fn load(&mut self, value: f64, register: usize) -> Result<bool, StrontiumError> {
+	/*fn load(&mut self, value: f64, register: usize) -> Result<bool, StrontiumError> {
 		if register <= NUM_REGISTERS {
 			self.registers[register] = value;
 		} else {
@@ -229,14 +285,14 @@ impl Strontium {
 	}
 
 	fn jump(&mut self, destination: usize) -> bool {
-		self.index = destination;
+		self.ip = destination;
 
 		true
 	}
 
 	fn jumpc(&mut self, destination: usize, pointer: MemoryAddress) -> bool {
 		if self.memory.data[pointer as usize] == 1 {
-			self.index = destination;
+			self.ip = destination;
 		}
 
 		true
@@ -282,15 +338,15 @@ impl Strontium {
 
 	fn interrupt(&mut self, _kind: Interrupt) -> Result<bool, StrontiumError> {
 		Ok(true)
-	}
+	}*/
 
-	fn peek(&self) -> Instruction {
-		self.program[self.index].clone()
+	fn peek(&self) -> u8 {
+		self.memory.data[self.ip]
 	}
 
 	fn advance(&mut self) -> bool {
-		if self.index + 1 < self.program.len() {
-			self.index += 1;
+		if self.ip + 1 < self.memory.data.len() {
+			self.ip += 1;
 			true
 		} else {
 			false
