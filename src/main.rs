@@ -1,5 +1,5 @@
 extern crate strontium;
 
 fn main() {
-	println!("Hello, world.");
+	strontium::repl::launch(true);
 }
