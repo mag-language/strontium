@@ -45,15 +45,18 @@ pub enum StrontiumError {
 	DivisionByZero,
 	/// An invalid memory or register address has been accessed.
 	OutOfBounds,
+	/// The machine encountered an invalid operation code.
+	IllegalOpcode(u8),
+	UnexpectedEof,
 	Other(String),
 }
 
-const NUM_REGISTERS: usize = 64;
+const NUM_REGISTERS: usize = 32;
 
 
 pub struct Strontium {
 	/// Holds 64 64-bit floating point values
-	pub registers: [f64; NUM_REGISTERS],
+	pub registers: [u64; NUM_REGISTERS],
 	/// Models memory as a vector of bytes. This structure holds the 
 	/// program and related data.
 	pub memory:    Memory,
@@ -68,7 +71,7 @@ impl Strontium {
 	/// Create a new instance of the virtual machine
 	pub fn new() -> Self {
 		Self {
-			registers:  [0.0; NUM_REGISTERS],
+			registers:  [0; NUM_REGISTERS],
 			memory:     Memory::new(),
 			ip:      	0,
 			call_stack: vec![],
@@ -95,7 +98,7 @@ impl Strontium {
 	pub fn execute_until_halt(&mut self) -> Result<bool, StrontiumError> {
 		self.should_continue = true;
 
-		while self.should_continue {
+		while self.should_continue && !self.eof() {
 			self.execute()?;
 		}
 
@@ -104,13 +107,15 @@ impl Strontium {
 
 	pub fn consume_f64(&mut self) -> Result<f64, StrontiumError> {
 		if (self.ip + 7 <= self.memory.data.len()) {
-			// We have enough space in memory to add the new code.
-			let mut bytes = self.memory.range(self.ip .. self.ip + 8).unwrap();
+			println!("ip: {}    [before f16]", self.ip);
+			let mut bytes = self.memory.range(self.ip .. self.ip + 8)?;
+			println!("f64: bytes:  {:?} ", &bytes);
 
 			let float = bytes
         			.read_f64::<LittleEndian>()
         			.expect("Unable to read f64 value");
 
+        	println!("ip: {}    [after f16]", self.ip);
 			Ok(float)
 		} else {
 			Err(StrontiumError::OutOfBounds)
@@ -121,10 +126,13 @@ impl Strontium {
 		if (self.ip + 7 <= self.memory.data.len()) {
 			// We have enough space in memory to add the new code.
 			let mut bytes = self.memory.range(self.ip .. self.ip + 8).unwrap();
+			println!("{:?}", bytes);
 
 			let int = bytes
         			.read_u64::<LittleEndian>()
         			.expect("Unable to read u64 value");
+
+        	self.advance_by(8)?;
 
 			Ok(int)
 		} else {
@@ -141,6 +149,10 @@ impl Strontium {
         			.read_u16::<LittleEndian>()
         			.expect("Unable to read u16 value");
 
+        	self.advance_by(2)?;
+
+        	println!("ip: {}    [after u16]", self.ip);
+
 			Ok(int)
 		} else {
 			Err(StrontiumError::OutOfBounds)
@@ -153,14 +165,18 @@ impl Strontium {
 
 		let opcode: Opcode = byte.into();
 
+		println!("ip: {}", self.ip);
+
 		self.should_continue = match opcode {
 			HALT => {
-				println!("Halt signal received");
 				false
 			},
 			LOAD => {
+				self.advance();
 				let register = self.consume_u16()?;
-				let value = self.consume_f64()?;
+				let value = self.consume_u64()?;
+
+				println!("");
 
 				self.registers[register as usize] = value;
 				true
@@ -202,8 +218,7 @@ impl Strontium {
 			},*/
 
 			_ => {
-				println!("unimplemented");
-				true
+				return Err(StrontiumError::IllegalOpcode(self.peek()))
 			}
 		};
 
@@ -351,6 +366,20 @@ impl Strontium {
 		} else {
 			false
 		}
+	}
+
+	fn advance_by(&mut self, n: usize) -> Result<(), StrontiumError> {
+		if self.ip + n < self.memory.data.len() {
+			self.ip += n;
+			Ok(())
+		} else {
+			Err(StrontiumError::UnexpectedEof)
+		}
+	}
+
+	/// Returns true when the instruction pointer is at the end of the memory array.
+	fn eof(&self) -> bool {
+		self.ip > self.memory.data.len()
 	}
 }
 
