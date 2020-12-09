@@ -13,7 +13,7 @@ impl Memory {
 	/// Create a new memory instance
 	pub fn new() -> Self {
 		Self {
-			data: vec![]
+			data: vec![0; 2048]
 		}
 	}
 
