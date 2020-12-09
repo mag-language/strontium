@@ -4,7 +4,7 @@
 
 Strontium is a lightweight virtual machine for dynamically and statically typed programming languages. It currently operates on a set of 64 registers, which each hold a 64-bit floating point value. A memory abstraction provides the storage space for anything else.
 
-# Instruction Set Architecture
+# How does it work?
 
 A lightweight RISC-like instruction set is used to represent programs. Strontium favors the composition of functionality using basic functions over the creation of new, custom instructions for specific tasks. The following is a list of all 10 available instructions:
 
