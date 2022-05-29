@@ -33,3 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Use new banner hosted on Scaleway.
+
+### Removed
+- Remove GitLab CI configuration since we're on Gitea now.
