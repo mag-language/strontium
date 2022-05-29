@@ -1,4 +1,4 @@
-![Strontium](https://i.imgur.com/cKsPKPh.png)
+![Strontium](https://s3.fr-par.scw.cloud/strontium.dev/strontium_banner.svg)
 
 # What is Strontium?
 
