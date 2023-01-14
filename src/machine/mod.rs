@@ -11,15 +11,7 @@ use self::memory::Memory;
 use self::opcode::Opcode;
 use self::opcode::Opcode::*;
 
-use self::instruction::{
-	Instruction,
-	MemoryMethod, 
-	ComparisonMethod, 
-	CalculationMethod, 
-	Interrupt,
-};
-
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt};
 
 #[derive(Debug, PartialEq)]
 pub enum StrontiumError {
@@ -88,7 +80,7 @@ impl Strontium {
 	}
 
 	pub fn consume_f64(&mut self) -> Result<f64, StrontiumError> {
-		if (self.ip + 7 <= self.memory.data.len()) {
+		if self.ip + 7 <= self.memory.data.len() {
 			println!("ip: {}    [before f16]", self.ip);
 			let mut bytes = self.memory.range(self.ip .. self.ip + 8)?;
 			println!("f64: bytes:  {:?} ", &bytes);
@@ -123,7 +115,7 @@ impl Strontium {
 	}
 
 	pub fn consume_u16(&mut self) -> Result<u16, StrontiumError> {
-		if (self.ip + 7 <= self.memory.data.len()) {
+		if self.ip + 7 <= self.memory.data.len() {
 			// We have enough space in memory to add the new code.
 			let mut bytes = self.memory.range(self.ip .. self.ip + 8).unwrap();
 
