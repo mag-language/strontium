@@ -1,8 +1,6 @@
 //! This module contains the virtual machine which executes Strontium bytecode. The VM uses a set of typed 
 //! registers to do number arithmetic, a memory vector provides the storage space for anything else.
 
-use crate::types::{MemoryAddress, Location};
-
 pub mod memory;
 pub mod instruction;
 pub mod opcode;
