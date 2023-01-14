@@ -20,7 +20,7 @@ pub fn launch(show_logo: bool) {
 		println!("{}\n", LOGO.green().bold());
 	}
 
-	let mut reader = Interface::new("strontium").unwrap();
+	let reader = Interface::new("strontium").unwrap();
 
 	println!("Launching bytecode interpreter");
 
@@ -34,7 +34,7 @@ pub fn launch(show_logo: bool) {
 
 				_ => {
 					if let Ok(bytes) = hex::decode(input.replace(" ", "")) {
-						let string = String::from_utf8_lossy(&bytes).into_owned();
+						let _string = String::from_utf8_lossy(&bytes).into_owned();
 
 						machine.push_bytecode(&bytes[..]);
 						
