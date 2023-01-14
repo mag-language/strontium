@@ -6,6 +6,7 @@ use crate::types::{MemoryAddress, Location};
 pub mod memory;
 pub mod instruction;
 pub mod opcode;
+pub mod register;
 
 use self::memory::Memory;
 
@@ -21,23 +22,6 @@ use self::instruction::{
 };
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-
-/*/// A set of signed and unsigned integers and floating point values
-#[derive(Debug)]
-pub struct Registers {
-	pub int:   [i64; 32],
-	pub uint:  [u64; 32],
-	pub float: [f64; 32],
-}
-impl Registers {
-	pub fn new() -> Self {
-		Self {
-			int:   [0; 32],
-			uint:  [0; 32],
-			float: [0.0; 32],
-		}
-	}
-}*/
 
 #[derive(Debug, PartialEq)]
 pub enum StrontiumError {
@@ -63,7 +47,7 @@ pub struct Strontium {
 	/// An instruction pointer that indicates the current position in the program memory.
 	pub ip:        usize,
 	/// Contains references for function arguments and return values
-	pub call_stack:    Vec<MemoryAddress>,
+	pub call_stack: Vec<u8>,
 	should_continue: bool,
 }
 
