@@ -101,7 +101,11 @@ mod tests {
     fn serialize_deserialize() {
  		let program = Program::new(
             14,
-            Constants::new(vec![]),
+            Constants::new(
+                vec![
+                    ("pi".to_string(), Constant::Float32(3.14159265358)),
+                ]
+            ),
             vec![],
         );
 
@@ -112,7 +116,9 @@ mod tests {
             decoded,
             Program::new(
                 14,
-                Constants::new(vec![]),
+                Constants::new(vec![
+                    ("pi".to_string(), Constant::Float32(3.14159265358)),
+                ]),
                 vec![],
             ),
         );
