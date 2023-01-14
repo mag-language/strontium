@@ -1,4 +1,7 @@
 use serde::{Serialize, Deserialize};
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::BufReader;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct Program {
@@ -56,6 +59,24 @@ impl Program {
         } else {
             Err(BytecodeError::NoSignatureFound)
         }
+    }
+
+    pub fn save(&self, path: String)-> std::io::Result<()> {
+        let mut file = File::create(path)?;
+        file.write_all(&self.to_bytes())?;
+        Ok(())
+    }
+
+
+    pub fn open(&self, path: String)-> std::io::Result<Self> {
+        let file = File::open(path)?;
+        let mut reader = BufReader::new(file);
+        let mut buffer = Vec::new();
+    
+        // Read file into vector.
+        reader.read_to_end(&mut buffer)?;
+        
+        Ok(Self::from_bytes(&buffer[..]).unwrap())
     }
 }
 
