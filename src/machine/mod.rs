@@ -59,7 +59,7 @@ impl Strontium {
 	}
 
 	pub fn push_bytecode(&mut self, bytes: &[u8]) {
-		if (self.ip + bytes.len() <= self.memory.data.len()) {
+		if self.ip + bytes.len() <= self.memory.data.len() {
 			// We have enough space in memory to add the new code.
 			self.memory.set_range(self.ip, bytes.to_vec());
 		} else {
@@ -97,7 +97,7 @@ impl Strontium {
 	}
 
 	pub fn consume_u64(&mut self) -> Result<u64, StrontiumError> {
-		if (self.ip + 7 <= self.memory.data.len()) {
+		if self.ip + 7 <= self.memory.data.len() {
 			// We have enough space in memory to add the new code.
 			let mut bytes = self.memory.range(self.ip .. self.ip + 8).unwrap();
 			println!("{:?}", bytes);
