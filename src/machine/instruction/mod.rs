@@ -4,7 +4,7 @@ use crate::types::{
 	Location,
 };
 
-pub mod encode;
+//pub mod encode;
 
 /// Represents a callable machine instruction
 #[derive(Debug, Clone, PartialEq)]
@@ -18,16 +18,16 @@ pub enum Instruction {
 		register: RegisterAddress,
 	},
 
-	/// Move a value from a register to memory or vice versa
+	/// Move a value from one register address to another.
 	MOVE {
-		source: 	 Location,
-		destination: Location,
+		source: 	 RegisterAddress,
+		destination: RegisterAddress,
 	},
 
 	/// Copy a value from a register to memory or vice versa
 	COPY {
-		source:      Location,
-		destination: Location,
+		source:      RegisterAddress,
+		destination: RegisterAddress,
 	},
 
 	/// Perform a calculation on two registers and write the result to a third
@@ -38,12 +38,12 @@ pub enum Instruction {
 		destination: RegisterAddress,
 	},
 
-	// Compare two registers and write the result (`0` or `1`) into a given memory address
+	// Compare two registers and write the result (`0` or `1`) into a third
 	COMPARE {
 		method: 	 ComparisonMethod,
 		operand1:    RegisterAddress,
 		operand2:    RegisterAddress,
-		destination: MemoryAddress,
+		destination: RegisterAddress,
 	},
 
 	// Perform a memory operation (`and`, `or`, `xor`, `not`, `lsh`, `rsh`, `grow`, `shrink`, `set`, or `unset`)
@@ -66,11 +66,14 @@ pub enum Instruction {
 	INTERRUPT {
 		interrupt: Interrupt,
 	},
+
+	CALL {},
+	RETURN {},
 }
 
 #[derive(Debug, Clone, PartialEq)]
-/// A signal to the machine, indicating that an event needs immediate attention. This enumeration
-/// contains the interrupt types which are supported by the virtual machine.
+/// A signal indicating that an event needs immediate attention. This enumeration
+/// contains the interrupt types supported by the virtual machine.
 pub enum Interrupt {
 	/// Print the ASCII character from the given address in memory
 	PRINT {
