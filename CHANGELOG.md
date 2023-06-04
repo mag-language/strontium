@@ -30,9 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - Start using [human-readable changelogs](https://keepachangelog.com/en/1.0.0/).
+- A `Program` struct which decouples the bytecode encoding/decoding logic from the machine.
 
 ### Changed
 - Use new banner hosted on Scaleway.
 
 ### Removed
 - Remove GitLab CI configuration since we're on Gitea now.
+- The `Memory` struct was removed in favor of dynamically typed registers.
