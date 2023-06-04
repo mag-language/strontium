@@ -37,6 +37,8 @@ pub enum Opcode {
 	JUMPC,
 	/// Emit an event that needs immediate attention (`READ`, `PRINT`)
 	INTERRUPT,
+	CALL,
+	RETURN,
 	/// An invalid opcode.
 	ILLEGAL,
 }
@@ -54,6 +56,8 @@ impl From<u8> for Opcode {
 			7 => JUMP,
 			8 => JUMPC,
 			9 => INTERRUPT,
+			10 => CALL,
+			11 => RETURN,
 
 			_ => ILLEGAL,
 		}
