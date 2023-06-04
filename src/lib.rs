@@ -1,11 +1,11 @@
-//#![feature(custom_attribute)]
+// #![feature(custom_attribute)]
 
-#[macro_use] extern crate pest_derive;
+// #[macro_use] extern crate pest_derive;
 
-pub mod assembler;
+// pub mod assembler;
 pub mod types;
 pub mod machine;
 pub mod repl;
 
 pub use self::machine::Strontium;
-pub use self::machine::instruction::Instruction;
+// pub use self::machine::instruction::Instruction;
