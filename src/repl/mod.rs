@@ -36,7 +36,7 @@ pub fn launch(show_logo: bool) {
 					if let Ok(bytes) = hex::decode(input.replace(" ", "")) {
 						let _string = String::from_utf8_lossy(&bytes).into_owned();
 
-						machine.push_bytecode(&bytes[..]);
+						machine.push_bytecode(bytes);
 						
 						match machine.execute_until_halt() {
 							Ok(_) => {},
