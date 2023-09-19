@@ -6,7 +6,6 @@ pub mod opcode;
 pub mod register;
 
 use self::opcode::Opcode;
-use self::opcode::Opcode::*;
 use self::register::{RegisterValue, Registers, Reserved};
 
 use crate::types::StrontiumError;
