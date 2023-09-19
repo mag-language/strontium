@@ -31,7 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Start using [human-readable changelogs](https://keepachangelog.com/en/1.0.0/).
 - A `Program` struct which decouples the bytecode encoding/decoding logic from the machine.
-- A new array containing a collection of structs which implement `Instruction` to abstract instruction execution into modules similar to how Pratt parsing works for text.
+- A new `executors` array containing a collection of structs which implement `Instruction` to abstract instruction execution into modules similar to how Pratt parsing works for text.
+- A `Value` enum which provides type tags for registers.
 
 ### Changed
 - Use new banner hosted on Scaleway.
