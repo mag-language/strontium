@@ -11,6 +11,9 @@ use self::register::{RegisterValue, Registers, Reserved};
 
 use crate::types::StrontiumError;
 
+use std::convert::TryInto;
+use std::collections::HashMap;
+use std::rc::Rc;
 // use byteorder::{LittleEndian, ReadBytesExt};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -32,6 +35,32 @@ pub struct StackFrame {
     pub arg_count: usize,
 }
 
+pub trait Instruction {
+    fn execute(&self, vm: &mut Strontium) -> Result<bool, StrontiumError>;
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct HaltInstruction;
+
+impl Instruction for HaltInstruction {
+    fn execute(&self, _vm: &mut Strontium) -> Result<bool, StrontiumError> {
+        Ok(false)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct LoadInstruction;
+
+impl Instruction for LoadInstruction {
+    fn execute(&self, vm: &mut Strontium) -> Result<bool, StrontiumError> {
+        vm.advance();
+        let register_index = vm.consume_u16()? as usize;
+        let value = vm.consume_u64()?;
+        vm.registers.set(register_index, RegisterValue::UInt(value));
+        Ok(true)
+    }
+}
+
 pub struct Strontium {
 	/// Holds general-purpose registers for storing different types of values
 	pub registers: Registers,
@@ -40,34 +69,32 @@ pub struct Strontium {
 	/// Contains references for function arguments and return values
 	pub call_stack: Vec<u8>,
 	should_continue: bool,
+	executors: HashMap<Opcode, Rc<dyn Instruction>>,
 }
 
 impl Strontium {
 	/// Create a new instance of the virtual machine
 	pub fn new() -> Self {
+		let mut executors: HashMap<Opcode, Rc<dyn Instruction>> = HashMap::new();
+
+        executors.insert(Opcode::HALT, Rc::new(HaltInstruction));
+        executors.insert(Opcode::LOAD, Rc::new(LoadInstruction));
+
 		Self {
 			registers:  Registers::new(),
 			ip:      	0,
 			call_stack: vec![],
 			should_continue: true,
+			executors,
 		}
 	}
 
-	pub fn push_bytecode(&mut self, bytes: Vec<u8>) {
-		let ip = self.ip();
+	/// Append machine code to the array in the bytecode register.
+    pub fn push_bytecode(&mut self, bytes: Vec<u8>) {
 		let mut bytecode = self.get_bytecode().clone();
-		bytecode.append(
-			&mut bytes
-				.iter()
-				.map(|byte| RegisterValue::UInt8(*byte))
-				.collect()
-		);
-
-		self.registers.set_reserved(
-			Reserved::Ip,
-			RegisterValue::UInt((ip + 1) as u64),
-		);
-	}
+        bytecode.extend(bytes.iter().map(|&byte| RegisterValue::UInt8(byte)));
+        self.registers.set_reserved(Reserved::Bc, RegisterValue::Array(bytecode));
+    }
 
 	fn get_reserved_register(&mut self, r: Reserved) -> &RegisterValue {
 		self.registers.get_reserved(r)
@@ -88,94 +115,100 @@ impl Strontium {
 		self.registers.bc()
 	}
 
+    fn consume_u64(&mut self) -> Result<u64, StrontiumError> {
+		let ip = self.ip().clone();
+
+        let bytes: Vec<u8> = self.get_bytecode()[ip .. ip + 8].iter().map(|v| match v {
+            RegisterValue::UInt8(b) => *b,
+            _ => unreachable!(),
+        }).collect();
+
+        let int = u64::from_le_bytes(bytes.try_into().unwrap());
+        self.advance_by(8)?;
+        Ok(int)
+    }
+
+    fn consume_u16(&mut self) -> Result<u16, StrontiumError> {
+		let ip = self.ip().clone();
+
+        let bytes: Vec<u8> = self.get_bytecode()[ip .. ip + 2].iter().map(|v| match v {
+            RegisterValue::UInt8(b) => *b,
+            _ => unreachable!(),
+        }).collect();
+
+        let int = u16::from_le_bytes(bytes.try_into().unwrap());
+        self.advance_by(2)?;
+        Ok(int)
+    }
+
 	pub fn execute_until_halt(&mut self) -> Result<bool, StrontiumError> {
-		self.should_continue = true;
+        self.should_continue = true;
+        while self.should_continue && !self.eof() {
+            self.execute()?;
+        }
+        Ok(true)
+    }
 
-		while self.should_continue && !self.eof() {
-			self.execute()?;
-		}
-
-		Ok(true)
+    pub fn execute(&mut self) -> Result<bool, StrontiumError> {
+		let byte = self.peek();
+		let opcode: Opcode = byte.into();
+	
+		let executor = self.executors.get(&opcode).cloned();
+	
+		self.should_continue = match executor {
+			Some(executor) => executor.execute(self)?,
+			None => return Err(StrontiumError::IllegalOpcode(self.peek())),
+		};
+	
+		Ok(self.should_continue)
 	}
 
-	/*pub fn consume_f64(&mut self) -> Result<f64, StrontiumError> {
-		if self.get_ip() + 7 <= self.get_bytecode().len() {
-			println!("ip: {}    [before f16]", self.ip);
-			let mut bytes = self.memory.range(self.ip .. self.ip + 8)?;
-			println!("f64: bytes:  {:?} ", &bytes);
-
-			let float = bytes
-        			.read_f64::<LittleEndian>()
-        			.expect("Unable to read f64 value");
-
-        	println!("ip: {}    [after f16]", self.ip);
-			Ok(float)
-		} else {
-			Err(StrontiumError::OutOfBounds)
-		}
-	}
-
-	pub fn consume_u64(&mut self) -> Result<u64, StrontiumError> {
-		if self.get_ip() + 7 <= self.get_bytecode().len() {
-			// We have enough space in memory to add the new code.
-			let mut bytes = self.memory.range(self.ip .. self.ip + 8).unwrap();
-			println!("{:?}", bytes);
-
-			let int = bytes
-        			.read_u64::<LittleEndian>()
-        			.expect("Unable to read u64 value");
-
-        	self.advance_by(8)?;
-
-			Ok(int)
-		} else {
-			Err(StrontiumError::OutOfBounds)
-		}
-	}
-
-	pub fn consume_u16(&mut self) -> Result<u16, StrontiumError> {
-		if self.get_ip() + 7 <= self.get_bytecode().len().try_into().unwrap() {
-			// We have enough space in memory to add the new code.
-			let mut bytes = self.memory.range(self.get_ip() .. self.get_ip() + 8).unwrap();
-
-			let int = bytes
-        			.read_u16::<LittleEndian>()
-        			.expect("Unable to read u16 value");
-
-        	self.advance_by(2)?;
-
-        	println!("ip: {}    [after u16]", self.ip);
-
-			Ok(int)
-		} else {
-			Err(StrontiumError::OutOfBounds)
-		}
-	}*/
-
+/*
 	/// Execute a single instruction
 	pub fn execute(&mut self) -> Result<bool, StrontiumError> {
 		let byte = self.peek();
-
 		let opcode: Opcode = byte.into();
 
 		println!("ip: {}", self.ip());
 
 		self.should_continue = match opcode {
+			// Stop all execution instantly.
 			HALT => {
 				false
 			},
+
+			// Load a value into a register.
 			LOAD => {
+                self.advance();
+				// Parse the register index and value.
+                let register_index = self.consume_u16()? as usize;
+                let value = self.consume_u64()?;
+				// Load the value into register.
+                self.registers.set(register_index, RegisterValue::UInt(value));
+                true
+            },
+
+			// Move a register value to another register
+			MOVE => {
 				self.advance();
-/*
-				let register = self.consume_u16()?;
-				let value = self.consume_u64()?;
-
-				println!("");
-
-				self.registers[register as usize] = Value::UInt(value);
-*/
+				let source = self.consume_u16()? as usize;
+				let destination = self.consume_u16()? as usize;
+				let value = self.registers.get(source).unwrap().clone();
+				self.registers.set(source, RegisterValue::Empty);
+				self.registers.set(destination, value);
 				true
 			},
+
+			// Implement the `COPY` instruction
+			COPY => {
+				self.advance();
+				let source = self.consume_u16()? as usize;
+				let destination = self.consume_u16()? as usize;
+				let value = self.registers.get(source).unwrap().clone();
+				self.registers.set(destination, value);
+				true
+			},
+
 
 			/*
 			MOVE => self.move_value(source, destination)?,
@@ -219,6 +252,7 @@ impl Strontium {
 
 		Ok(self.should_continue)
 	}
+*/
 
 	fn peek(&self) -> u8 {
 		let bytecode = self.registers.bc();
@@ -238,9 +272,9 @@ impl Strontium {
 			false
 		}
 	}
-/*
+
 	fn advance_by(&mut self, n: usize) -> Result<(), StrontiumError> {
-		let ip = self.ip();
+		let ip = self.ip().clone();
 		
 		if ip + n < self.bc().len() {
 			self.registers.set_reserved(
@@ -252,10 +286,11 @@ impl Strontium {
 			Err(StrontiumError::UnexpectedEof)
 		}
 	}
-*/
+
 	/// Returns true when the instruction pointer is at the end of the memory array.
 	fn eof(&mut self) -> bool {
-		self.ip > self.bc().len()
+		let ip = self.ip().clone();
+		ip > self.bc().len()
 	}
 }
 
