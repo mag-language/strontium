@@ -115,7 +115,7 @@ impl Strontium {
 	}
 
     fn consume_u64(&mut self) -> Result<u64, StrontiumError> {
-		let ip = self.ip().clone();
+		let ip = self.ip();
 
         let bytes: Vec<u8> = self.get_bytecode()[ip .. ip + 8].iter().map(|v| match v {
             RegisterValue::UInt8(b) => *b,
@@ -128,7 +128,7 @@ impl Strontium {
     }
 
     fn consume_u16(&mut self) -> Result<u16, StrontiumError> {
-		let ip = self.ip().clone();
+		let ip = self.ip();
 
         let bytes: Vec<u8> = self.get_bytecode()[ip .. ip + 2].iter().map(|v| match v {
             RegisterValue::UInt8(b) => *b,
