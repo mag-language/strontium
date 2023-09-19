@@ -1,5 +1,6 @@
 use self::Opcode::*;
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Opcode {
 	/// Stop all execution instantly.
 	HALT,
