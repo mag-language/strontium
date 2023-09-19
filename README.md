@@ -2,24 +2,43 @@
 
 # What is Strontium?
 
-Strontium is a lightweight virtual machine for dynamically and statically typed programming languages. It currently operates on a set of 64 registers, which each hold a 64-bit floating point value. A memory abstraction provides the storage space for anything else.
+Strontium is a lightweight register-based bytecode interpreter with a RISC instruction set.
+
+It is built primarily to support Mag as the underlying, executive portion of the language engine. Any Mag source code first runs through the compiler, is then compiled to Strontium bytecode and finally interpreted by this virtual machine.
 
 # How does it work?
 
-A lightweight RISC-like instruction set is used to represent programs. Strontium favors the composition of functionality using basic functions over the creation of new, custom instructions for specific tasks. The following is a list of all 10 available instructions:
+A lightweight RISC-like instruction set architecture is used to keep the number of instructions small and easily maintainable, while more complex tasks are achieved using combinations of multiple bytecode instructions. The following sections tell more details about the registers and instruction set of this virtual machine.
 
-| **Opcode**| **Instruction** | **Description**               
+## Registers
+
+The following registers are pre-allocated when the machine starts:
+
+|**Number**|**Register**|**Type**|**Description**
+| -------- | ---------- | ------ | --------------
+|  0       | `ip` 		 |`UInt`| Points to the position of the byte to be read next from the bytecode buffer in the `bc` register.
+|  1       | `bc`      	 |`List<u8>`| Contains the bytecode of the running program.
+|  2       | `arg`       |`Pattern`| Stores the parameter of the multimethod if one is currently being called.
+|  3 .. 32 |`gp{3 .. 32}`|`*`| A set of 29 general-purpose registers, which are pre-allocated when the machine starts and filled with `Int`s containing zeroes. The program may then expand, shrink or mutate this register set freely.
+
+Use the `LOAD` instruction to load values from bytecode into general purpose registers at runtime.
+
+## Instruction Set
+
+The following instructions may then used in program bytecode to operate on the registers:
+
+|**Opcode**| **Name**     | **Description**
 | -------- | --------------- | ----------------------------
-|  `0x01`  | `HALT` 		 | Stop all execution instantly.
-|  `0x02`  | `LOAD`      	 | Load a floating-point value into a register.
-|  `0x03`  | `MOVE` 		 | Move a value from a register to a memory location or vice versa. The first argument is the source, the second is the destination. Swap the arguments to change the direction. The source will be cleared after the operation.
-|  `0x04`  | `COPY` 		 | Copy a value from a register to a memory location or vice versa. The source will be left untouched.
-|  `0x05`  | `CALCULATE` 	 | Perform a calculation (`ADD`, `SUBTRACT`, `MULTIPLY`, `DIVIDE`) on two registers and write the result to a third. 
-|  `0x06`  | `COMPARE` 	     | Perform a comparison (`EQ`, `NEQ`, `LT`, `LTE`, `GT`, `GTE`) on two registers and write the result to a memory address or a register.
-|  `0x07`  | `MEMORY` 	     | Perform a bitwise operation (`AND`, `OR`, `XOR`, `NOT`, `LSH`, `RSH`) on two or three addresses, or perform a memory operation (`GROW`, `SHRINK`, `SET`, `UNSET`)
-|  `0x08`  | `JUMP` 	     | Set the program counter to a value from a location, using one of the methods (`absolute`, `forward`, `backward`)
-|  `0x09`  | `JUMPC` 	     | Set the program counter to a value from a location if the byte at a given address in memory has the value of `1`
-|  `0x0A`  | `INTERRUPT` 	 | Emit an event that needs immediate attention (`READ`, `PRINT`)
+|  0  | `HALT` 		 | Stop all execution instantly.
+|  1  | `LOAD`      	 | Load a `Value` from program bytecode into a register.
+|  2  | `MOVE` 		 | Move a value from one register to another. The source register will be cleared after the operation.
+|  3  | `COPY` 		 | Copy a value from one register to another. The source will be left untouched.
+|  4  | `CALCULATE` 	 | Perform a calculation (`ADD`, `SUBTRACT`, `MULTIPLY`, `DIVIDE`) on two registers and write the result to a third. 
+|  5  | `COMPARE` 	     | Perform a comparison (`EQ`, `NEQ`, `LT`, `LTE`, `GT`, `GTE`) on two registers and write the result to a third.
+|  6  | `BITWISE` 	     | Perform a bitwise operation on one (`NOT`) or two (`AND`, `OR`, `XOR`, `LSH`, `RSH`) registers and write the result into another.
+|  7  | `JUMP` 	     | Set the program counter to a value from a location, using one of the methods (`absolute`, `forward`, `backward`)
+|  8  | `JUMPC` 	     | Same as the previous instruction, but with an additional register address argument. Will only perform the jump if the given register contains a `Value::Bool(true)`.
+|  9  | `INTERRUPT` 	 | Emit an event that needs immediate attention (`READ`, `PRINT`)
 
 Details about the binary encoding of particular instructions can be found in the wiki.
 
