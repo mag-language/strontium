@@ -1,12 +1,34 @@
 use crate::types::{
 	MemoryAddress,
 	RegisterAddress,
+	StrontiumError,
 	Location,
 };
+use super::RegisterValue;
 
-//pub mod encode;
+mod executors;
+pub use self::executors::*;
+
+use super::Strontium;
+
+pub trait Executor {
+    fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError>;
+}
+
+pub enum Instruction {
+	Halt,
+	Load(LoadInstruction),
+}
+
+pub struct LoadInstruction {
+	/// The name of the register to load the value into.
+	name:  String,
+	/// The value to load into the register.
+	value: RegisterValue,
+}
 
 /// Represents a callable machine instruction
+/*
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
 	/// Stop all further execution
@@ -70,6 +92,7 @@ pub enum Instruction {
 	CALL {},
 	RETURN {},
 }
+*/
 
 #[derive(Debug, Clone, PartialEq)]
 /// A signal indicating that an event needs immediate attention. This enumeration

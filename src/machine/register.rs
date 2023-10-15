@@ -1,124 +1,67 @@
 use std::collections::HashMap;
+use std::string::String;
 
-pub enum Reserved {
-    Bc,
-    Ip,
-    Fp,
-    Sp,
-}
-
-impl Reserved {
-    pub fn index(&self) -> usize {
-        match self {
-            Reserved::Bc => 0,
-            Reserved::Ip => 1,
-            Reserved::Fp => 2,
-            Reserved::Sp => 3,
-        }
-    }
-}
+use self::RegisterValue::*;
 
 #[derive(Debug, Clone)]
 pub struct Registers {
     /// A set of registers which can be resized dynamically.
-    pub registers: Vec<RegisterValue>,
+    pub registers: HashMap<String, RegisterValue>,
 }
 
 impl Registers {
     pub fn new() -> Self {
-        // The number of total registers to allocate at initalization.
-        let size = 16;
+        let mut registers = HashMap::new();
 
-        // The program bytecode as a list of `UInt8`s
-        let bc = RegisterValue::Array(vec![]);
-        // The instruction pointer, which points to the next instruction in the bytecode.
-        let ip = RegisterValue::UInt(0);
-        // The frame pointer, which points to the current index in the stack frame.
-        let fp = RegisterValue::UInt(0);
-        // The stack pointer, which points to the current index in the stack.
-        let sp = RegisterValue::UInt(0);
-
-        let mut registers = vec![
-            bc,
-            ip,
-            fp,
-            sp,
-        ];
-
-        let mut i = 0;
-
-        while i < size {
-            registers.push(RegisterValue::Empty);
-            i += 1;
-        }
+        // Create instruction pointer.
+        registers.insert("ip".to_string(), UInt64(0));
+        // Create array containing program bytecode.
+        registers.insert("bc".to_string(), Array(Vec::new()));
 
         Self {
             registers,
         }
     }
 
-    pub fn get(&self, index: usize) -> Option<&RegisterValue> {
-        self.registers.get(index)
+    pub fn set(&mut self, name: &str, value: RegisterValue) {
+        self.registers.insert(name.to_string(), value);
     }
 
-    pub fn set(&mut self, index: usize, value: RegisterValue) {
-        if index < self.registers.len() {
-            self.registers[index] = value;
-        } else {
-            // Possibly resize the Vec if needed
-        }
-    }
-
-    pub fn get_reserved(&self, r: Reserved) -> &RegisterValue {
-        let index = r as usize;
-        // Safe unwrap with always-on reserved registers.
-        self.get(index).unwrap()
-    }
-
-    pub fn set_reserved(&mut self, r: Reserved, value: RegisterValue) {
-        let index = r.index();
-        self.set(index, value);
-    }
-
-    pub fn ip(&self) -> usize {
-        match self.get_reserved(Reserved::Ip) {
-			RegisterValue::UInt(ip) => *ip as usize,
-			_ => unreachable!(),
-		}
-    }
-
-    pub fn bc(&self) -> Vec<u8> {
-        match self.get_reserved(Reserved::Bc) {
-			RegisterValue::Array(instructions) => instructions
-                .iter()
-                .map(|reg_value| {
-                    match reg_value {
-                        RegisterValue::UInt8(byte) => *byte,
-			            _ => unreachable!(),
-                    }
-                })
-                .collect(),
-			_ => unreachable!(),
-		}
+    pub fn get(&self, name: &str) -> Option<&RegisterValue> {
+        self.registers.get(name)
     }
 }
 
 #[derive(Debug, Clone)]
 pub enum RegisterValue {
     Empty,
+    /// Signed integer, 8 bit
     Int8(i8),
+    /// Signed integer, 16 bit
     Int16(i16),
+    /// Signed integer, 32 bit
     Int32(i32),
-    Int(i64),
+    /// Signed integer, 64 bit
+    Int64(i64),
+    /// Unsigned integer, 8 bit
     UInt8(u8),
+    /// Unsigned integer, 16 bit
     UInt16(u16),
+    /// Unsigned integer, 32 bit
     UInt32(u32),
-    UInt(u64),
+    /// Unsigned integer, 64 bit
+    UInt64(u64),
+    /// Floating point number, 32 bit
     Float32(f32),
-    Float(f64),
+    /// Floating point number, 64 bit
+    Float64(f64),
+    /// UTF-8 string
     String(String),
+    /// `true` or `false`
     Boolean(bool),
+    /// A key-value assignment of strings and values.
     Map(HashMap<String, RegisterValue>),
+    /// A linear sequence of values.
     Array(Vec<RegisterValue>),
 }
 
@@ -129,13 +72,13 @@ impl RegisterValue {
             Self::Int8(_)    => RegisterType::Int8,
             Self::Int16(_)   => RegisterType::Int16,
             Self::Int32(_)   => RegisterType::Int32,
-            Self::Int(_)     => RegisterType::Int,
+            Self::Int64(_)   => RegisterType::Int64,
             Self::UInt8(_)   => RegisterType::UInt8,
             Self::UInt16(_)  => RegisterType::UInt16,
             Self::UInt32(_)  => RegisterType::UInt32,
-            Self::UInt(_)    => RegisterType::UInt,
+            Self::UInt64(_)  => RegisterType::UInt64,
             Self::Float32(_) => RegisterType::Float32,
-            Self::Float(_)   => RegisterType::Float,
+            Self::Float64(_) => RegisterType::Float64,
             Self::String(_)  => RegisterType::String,
             Self::Boolean(_) => RegisterType::Boolean,
             Self::Map(_)     => RegisterType::Map,
@@ -150,13 +93,13 @@ pub enum RegisterType {
     Int8,
     Int16,
     Int32,
-    Int,
+    Int64,
     UInt8,
     UInt16,
     UInt32,
-    UInt,
+    UInt64,
     Float32,
-    Float,
+    Float64,
     String,
     Boolean,
     Map,
