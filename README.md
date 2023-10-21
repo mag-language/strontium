@@ -1,5 +1,5 @@
 
-![Strontium](https://s3.fr-par.scw.cloud/strontium.dev/strontium_banner.svg)
+![Strontium](https://s3.fr-par.scw.cloud/strontium.dev/banner_green.svg)
 
 # Introduction
 
