@@ -1,5 +1,4 @@
 use crate::machine::{Executor, Strontium, StrontiumError};
-use super::super::Instruction;
 
 /// Stop all code execution immediately.
 ///
