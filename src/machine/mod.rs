@@ -53,6 +53,7 @@ impl Strontium {
 
         executors.insert(Opcode::HALT, Rc::new(HaltExecutor));
         executors.insert(Opcode::LOAD, Rc::new(LoadExecutor));
+        executors.insert(Opcode::CALCULATE, Rc::new(CalculateExecutor));
 
 		Self {
 			registers:  Registers::new(),
@@ -75,6 +76,32 @@ impl Strontium {
 		));
     }
 
+	/// Execute a single instruction.
+    pub fn execute(&mut self) -> Result<bool, StrontiumError> {
+		let byte = self.peek();
+		let opcode: Opcode = byte.into();
+
+		let executor = self.executors.get(&opcode).cloned();
+
+		self.should_continue = match executor {
+			Some(executor) => executor.execute(self)?,
+			None => return Err(StrontiumError::IllegalOpcode(self.peek())),
+		};
+
+		Ok(self.should_continue)
+	}
+
+	/// Execute instructions until a `HALT` instruction is encountered.
+	pub fn execute_until_halt(&mut self) -> Result<bool, StrontiumError> {
+        self.should_continue = true;
+
+        while self.should_continue && !self.eof() {
+            self.execute()?;
+        }
+
+        Ok(true)
+    }
+
 	fn ip(&self) -> usize {
 		match self.registers.get("ip").unwrap() {
 			RegisterValue::UInt64(ip) => *ip as usize,
@@ -94,137 +121,105 @@ impl Strontium {
         }).collect()
 	}
 
-    fn consume_u64(&mut self) -> Result<u64, StrontiumError> {
-		let ip = self.ip();
-
-        let bytes: Vec<u8> = self.bc()[ip .. ip + 8].to_vec();
-
-        let int = u64::from_le_bytes(bytes.try_into().unwrap());
-        self.advance_by(8)?;
-        Ok(int)
-    }
-
-    fn consume_u16(&mut self) -> Result<u16, StrontiumError> {
-		let ip = self.ip();
-        let bytes: Vec<u8> = self.bc()[ip .. ip + 2].to_vec();
-        let int = u16::from_le_bytes(bytes.try_into().unwrap());
-
-        self.advance_by(2)?;
-        Ok(int)
-    }
-
-	pub fn execute_until_halt(&mut self) -> Result<bool, StrontiumError> {
-        self.should_continue = true;
-        while self.should_continue && !self.eof() {
-            self.execute()?;
-        }
-        Ok(true)
-    }
-
-    pub fn execute(&mut self) -> Result<bool, StrontiumError> {
-		let byte = self.peek();
-		let opcode: Opcode = byte.into();
-	
-		let executor = self.executors.get(&opcode).cloned();
-	
-		self.should_continue = match executor {
-			Some(executor) => executor.execute(self)?,
-			None => return Err(StrontiumError::IllegalOpcode(self.peek())),
-		};
-	
-		Ok(self.should_continue)
+	fn _set_register(&mut self, name: &str, value: RegisterValue) {
+		self.registers.set(name, value);
 	}
 
-/*
-	/// Execute a single instruction
-	pub fn execute(&mut self) -> Result<bool, StrontiumError> {
-		let byte = self.peek();
-		let opcode: Opcode = byte.into();
-
-		println!("ip: {}", self.ip());
-
-		self.should_continue = match opcode {
-			// Stop all execution instantly.
-			HALT => {
-				false
-			},
-
-			// Load a value into a register.
-			LOAD => {
-                self.advance();
-				// Parse the register index and value.
-                let register_index = self.consume_u16()? as usize;
-                let value = self.consume_u64()?;
-				// Load the value into register.
-                self.registers.set(register_index, RegisterValue::UInt(value));
-                true
-            },
-
-			// Move a register value to another register
-			MOVE => {
-				self.advance();
-				let source = self.consume_u16()? as usize;
-				let destination = self.consume_u16()? as usize;
-				let value = self.registers.get(source).unwrap().clone();
-				self.registers.set(source, RegisterValue::Empty);
-				self.registers.set(destination, value);
-				true
-			},
-
-			// Implement the `COPY` instruction
-			COPY => {
-				self.advance();
-				let source = self.consume_u16()? as usize;
-				let destination = self.consume_u16()? as usize;
-				let value = self.registers.get(source).unwrap().clone();
-				self.registers.set(destination, value);
-				true
-			},
-
-
-			/*
-			MOVE => self.move_value(source, destination)?,
-			COPY => self.copy_value(source, destination),
-			CALCULATE => self.calculate(method.clone(), operand1 as usize, operand2 as usize, destination as usize)?),
-			
-			COMPARE { method, operand1, operand2, destination } => {
-				Ok(
-					self.compare(method.clone(), operand1 as usize, operand2 as usize, destination as usize)?
-				)
-			},
-
-			MEMORY { method } => {
-				Ok(
-					self.bitwise(method.clone())?
-				)
-			},
-
-			JUMP { destination } => {
-				Ok(
-					self.jump(destination)
-				)
-			},
-
-			JUMPC { destination, conditional_address } => {
-				Ok(
-					self.jumpc(destination, conditional_address)
-				)
-			},
-
-			INTERRUPT { interrupt } => {
-				Ok(
-					self.interrupt(interrupt.clone())?
-				)
-			},*/
-
-			_ => {
-				return Err(StrontiumError::IllegalOpcode(self.peek()))
-			}
-		};
-
-		Ok(self.should_continue)
+	fn _get_register(&self, name: &str) -> Option<&RegisterValue> {
+		self.registers.get(name)
 	}
-*/
+
+	fn consume_bytes(&mut self, size: usize) -> Result<Vec<u8>, StrontiumError> {
+		let ip = self.ip();
+		let bytecode = self.bc();
+
+		if ip + size > bytecode.len() {
+			Err(StrontiumError::UnexpectedEof)
+		} else {
+			let bytes = bytecode[ip .. ip + size].to_vec();
+			self.advance_by(size)?;
+			Ok(bytes)
+		}
+	}
+
+	/// Consume an unsigned 64-bit integer from the bytecode register.
+	///
+	/// This performs a lookahead on the bytecode register to read the next eight bytes
+	/// and converts the bytes into a 64-bit integer value. The byte encoding within
+	/// Strontium bytecode is always Little Endian.
+    pub fn consume_u64(&mut self) -> Result<u64, StrontiumError> {
+		let bytes = self.consume_bytes(8)?;
+		Ok(u64::from_le_bytes(bytes.try_into().unwrap()))
+	}
+
+	pub fn consume_u32(&mut self) -> Result<u32, StrontiumError> {
+		let bytes = self.consume_bytes(4)?;
+		Ok(u32::from_le_bytes(bytes.try_into().unwrap()))
+	}
+
+	pub fn consume_u16(&mut self) -> Result<u16, StrontiumError> {
+		let bytes = self.consume_bytes(2)?;
+		Ok(u16::from_le_bytes(bytes.try_into().unwrap()))
+	}
+
+	pub fn consume_u8(&mut self) -> Result<u8, StrontiumError> {
+		let bytes = self.consume_bytes(1)?;
+		Ok(bytes[0])
+	}
+
+	pub fn consume_i64(&mut self) -> Result<i64, StrontiumError> {
+		let bytes = self.consume_bytes(8)?;
+		Ok(i64::from_le_bytes(bytes.try_into().unwrap()))
+	}
+
+	pub fn consume_i32(&mut self) -> Result<i32, StrontiumError> {
+		let bytes = self.consume_bytes(4)?;
+		Ok(i32::from_le_bytes(bytes.try_into().unwrap()))
+	}
+
+	pub fn consume_i16(&mut self) -> Result<i16, StrontiumError> {
+		let bytes = self.consume_bytes(2)?;
+		Ok(i16::from_le_bytes(bytes.try_into().unwrap()))
+	}
+
+	pub fn consume_i8(&mut self) -> Result<i8, StrontiumError> {
+		let bytes = self.consume_bytes(1)?;
+		Ok(bytes[0] as i8)
+	}
+
+	pub fn consume_f64(&mut self) -> Result<f64, StrontiumError> {
+		let bytes = self.consume_bytes(8)?;
+		Ok(f64::from_le_bytes(bytes.try_into().unwrap()))
+	}
+
+	pub fn consume_f32(&mut self) -> Result<f32, StrontiumError> {
+		let bytes = self.consume_bytes(4)?;
+		Ok(f32::from_le_bytes(bytes.try_into().unwrap()))
+	}
+
+	pub fn consume_bool(&mut self) -> Result<bool, StrontiumError> {
+		let bytes = self.consume_bytes(1)?;
+		Ok(bytes[0] == 1)
+	}
+
+	pub fn consume_byte(&mut self) -> Result<u8, StrontiumError> {
+		let bytes = self.consume_bytes(1)?;
+		Ok(bytes[0])
+	}
+
+	pub fn consume_string(&mut self) -> Result<String, StrontiumError> {
+		// First, consume the length of the string (assuming it's stored as a 32-bit unsigned integer)
+		let length = self.consume_u32()? as usize;
+
+		// Now, consume the actual string bytes
+		let bytes = self.consume_bytes(length)?;
+
+		// Convert the bytes to a UTF-8 string
+		match String::from_utf8(bytes) {
+			Ok(string) => Ok(string),
+			Err(_) => Err(StrontiumError::InvalidUtf8String),
+		}
+	}
 
 	fn peek(&self) -> u8 {
 		let bytecode = self.bc();
@@ -264,5 +259,9 @@ impl Strontium {
 		let ip = self.ip().clone();
 		ip > self.bc().len()
 	}
+}
+
+mod test {
+
 }
 
