@@ -9,9 +9,9 @@ readme  = "README.md"
 license-file = "LICENSE"
 keywords = ["vm", "language", "bytecode", "p-code-machine"]
 
-[[bin]]
-name = "strontium"
-path = "src/main.rs"
+# [[bin]]
+# name = "strontium"
+# path = "src/main.rs"
 
 [lib]
 name = "strontium"
