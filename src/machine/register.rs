@@ -1,5 +1,8 @@
+use num_derive::{FromPrimitive, ToPrimitive};
+
 use std::collections::HashMap;
 use std::string::String;
+use std::ops::Add;
 
 use self::RegisterValue::*;
 
@@ -96,21 +99,72 @@ impl RegisterValue {
     }
 }
 
+impl Into<Vec<u8>> for RegisterValue {
+    fn into(self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        match self {
+            RegisterValue::Int32(i) => {
+                bytes.push(1); // Type tag for Int32
+                bytes.extend_from_slice(&i.to_le_bytes());
+            }
+            RegisterValue::Float64(f) => {
+                bytes.push(2); // Type tag for Float64
+                bytes.extend_from_slice(&f.to_le_bytes());
+            }
+            RegisterValue::String(s) => {
+                bytes.push(3); // Type tag for String
+                let string_bytes = s.into_bytes();
+                let length = string_bytes.len() as u32;
+                bytes.extend_from_slice(&length.to_le_bytes());
+                bytes.extend_from_slice(&string_bytes);
+            }
+            RegisterValue::Boolean(b) => {
+                bytes.push(4); // Type tag for Boolean
+                bytes.push(b as u8);
+            }
+            // ... handle other variants as needed
+            _ => unimplemented!(), // or provide a default value or error
+        }
+        bytes
+    }
+}
 
+impl Add for RegisterValue {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Int8(a), Self::Int8(b)) => Self::Int8(a.wrapping_add(b)),
+            (Self::Int16(a), Self::Int16(b)) => Self::Int16(a.wrapping_add(b)),
+            (Self::Int32(a), Self::Int32(b)) => Self::Int32(a.wrapping_add(b)),
+            (Self::Int64(a), Self::Int64(b)) => Self::Int64(a.wrapping_add(b)),
+            (Self::UInt8(a), Self::UInt8(b)) => Self::UInt8(a.wrapping_add(b)),
+            (Self::UInt16(a), Self::UInt16(b)) => Self::UInt16(a.wrapping_add(b)),
+            (Self::UInt32(a), Self::UInt32(b)) => Self::UInt32(a.wrapping_add(b)),
+            (Self::UInt64(a), Self::UInt64(b)) => Self::UInt64(a.wrapping_add(b)),
+            (Self::Float32(a), Self::Float32(b)) => Self::Float32(a + b),
+            (Self::Float64(a), Self::Float64(b)) => Self::Float64(a + b),
+            _ => panic!("Incompatible types for addition"),
+        }
+    }
+}
+
+/// Define possible register types which support conversion to byte values for encoding.
+#[derive(Debug, PartialEq, ToPrimitive, FromPrimitive)]
 pub enum RegisterType {
-    Empty,
-    Int8,
-    Int16,
-    Int32,
-    Int64,
-    UInt8,
-    UInt16,
-    UInt32,
-    UInt64,
-    Float32,
-    Float64,
-    String,
-    Boolean,
-    Map,
-    Array,
+    Empty   = 100,
+    Int8    = 101,
+    Int16   = 102,
+    Int32   = 103,
+    Int64   = 104,
+    UInt8   = 105,
+    UInt16  = 106,
+    UInt32  = 107,
+    UInt64  = 108,
+    Float32 = 109,
+    Float64 = 110,
+    String  = 111,
+    Boolean = 112,
+    Map     = 113,
+    Array   = 114,
 }
