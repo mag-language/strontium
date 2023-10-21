@@ -40,6 +40,8 @@ pub enum Opcode {
 	INTERRUPT,
 	CALL,
 	RETURN,
+	PUSH,
+	APPEND,
 	/// An invalid opcode.
 	ILLEGAL,
 }
@@ -59,6 +61,8 @@ impl From<u8> for Opcode {
 			9 => INTERRUPT,
 			10 => CALL,
 			11 => RETURN,
+			12 => PUSH,
+			13 => APPEND,
 
 			_ => ILLEGAL,
 		}
