@@ -1,9 +1,4 @@
-use crate::types::{
-	MemoryAddress,
-	RegisterAddress,
-	StrontiumError,
-	Location,
-};
+use crate::types::StrontiumError;
 use super::RegisterValue;
 
 mod executors;
@@ -15,20 +10,19 @@ pub trait Executor {
     fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError>;
 }
 
-pub enum Instruction {
-	Halt,
-	Load(LoadInstruction),
-}
-
-pub struct LoadInstruction {
-	/// The name of the register to load the value into.
-	name:  String,
-	/// The value to load into the register.
-	value: RegisterValue,
+#[derive(Debug, Clone, PartialEq)]
+/// A signal indicating that an event needs immediate attention. This enumeration
+/// contains the interrupt types supported by the virtual machine.
+pub enum Interrupt {
+	Print {
+		address: String,
+	},
+	Read {
+		address: String,
+	},
 }
 
 /// Represents a callable machine instruction
-/*
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
 	/// Stop all further execution
@@ -36,41 +30,45 @@ pub enum Instruction {
 
 	/// Load a numeric value into a register
 	LOAD {
-		value:    f64,
-		register: RegisterAddress,
+		value:    RegisterValue,
+		register: String,
 	},
 
 	/// Move a value from one register address to another.
 	MOVE {
-		source: 	 RegisterAddress,
-		destination: RegisterAddress,
+		source: 	 String,
+		destination: String,
 	},
 
 	/// Copy a value from a register to memory or vice versa
 	COPY {
-		source:      RegisterAddress,
-		destination: RegisterAddress,
+		source:      String,
+		destination: String,
 	},
 
 	/// Perform a calculation on two registers and write the result to a third
 	CALCULATE {
-		method: 	 CalculationMethod,
-		operand1:    RegisterAddress,
-		operand2:    RegisterAddress,
-		destination: RegisterAddress,
+		// The type of calculation to perform
+		method:   	 CalculationMethod,
+		// Left side operand as a named register address
+		operand1: 	 String,
+		// Right side operand as a named register address
+		operand2: 	 String,
+		// Output register
+		destination: String,
 	},
 
 	// Compare two registers and write the result (`0` or `1`) into a third
 	COMPARE {
 		method: 	 ComparisonMethod,
-		operand1:    RegisterAddress,
-		operand2:    RegisterAddress,
-		destination: RegisterAddress,
+		operand1:    String,
+		operand2:    String,
+		destination: String,
 	},
 
 	// Perform a memory operation (`and`, `or`, `xor`, `not`, `lsh`, `rsh`, `grow`, `shrink`, `set`, or `unset`)
-	MEMORY {
-		method: MemoryMethod
+	BITWISE {
+		method: BitwiseMethod
 	},
 
 	/// Set the program counter to the given value
@@ -81,7 +79,7 @@ pub enum Instruction {
 	/// Set the program counter to a value if the given byte has the value of `1`
 	JUMPC {
 		destination: usize,
-		conditional_address: u64,
+		conditional_address: String,
 	},
 
 	/// Set off an interrupt, for example to print a character to standard output
@@ -91,22 +89,6 @@ pub enum Instruction {
 
 	CALL {},
 	RETURN {},
-}
-*/
-
-#[derive(Debug, Clone, PartialEq)]
-/// A signal indicating that an event needs immediate attention. This enumeration
-/// contains the interrupt types supported by the virtual machine.
-pub enum Interrupt {
-	/// Print the ASCII character from the given address in memory
-	PRINT {
-		address: u64
-	},
-
-	/// Read an ASCII character from standard input and write it to the given memory address
-	READ {
-		address: u64
-	}
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -132,7 +114,7 @@ pub enum ComparisonMethod {
 
 #[derive(Debug, Clone, PartialEq)]
 #[allow(non_camel_case_types)]
-pub enum MemoryMethod {
+pub enum BitwiseMethod {
 	AND {
 		a: u64,
 		b: u64,

@@ -70,10 +70,8 @@ impl Strontium {
         self.registers.set("bc", RegisterValue::Array(
 			bytecode
 				.iter()
-				.map(|v| match v {
-					b => RegisterValue::UInt8(*b),
-					_ => unreachable!(),
-				}).collect()
+				.map(|v| RegisterValue::UInt8(*v))
+				.collect()
 		));
     }
 

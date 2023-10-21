@@ -1,6 +1,5 @@
 use crate::machine::{
     Executor,
-    RegisterValue,
     Strontium,
     StrontiumError,
 };
@@ -13,7 +12,7 @@ use crate::machine::{
 pub struct LoadExecutor;
 
 impl Executor for LoadExecutor {
-    fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError> {
+    fn execute(&self, _machine: &mut Strontium) -> Result<bool, StrontiumError> {
         
         Ok(true)
     }
