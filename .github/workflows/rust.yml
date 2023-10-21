@@ -26,6 +26,10 @@ jobs:
     - name: Build Documentation
       run: cargo doc --no-deps
 
+    # Redirect / to /strontium/ to render the documentation in the page root.
+    - name: Create Redirect Index
+      run: echo '<meta http-equiv="refresh" content="0; URL='./strontium/'" />' >> target/doc/index.html
+
     - name: Publish Documentation
       uses: peaceiris/actions-gh-pages@v3
       with:
