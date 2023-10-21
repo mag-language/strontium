@@ -78,9 +78,7 @@ impl Strontium {
 
 	/// Execute a single instruction.
     pub fn execute(&mut self) -> Result<bool, StrontiumError> {
-		let byte = self.peek();
-		let opcode: Opcode = byte.into();
-
+		let opcode: Opcode = self.consume_u8()?.into();
 		let executor = self.executors.get(&opcode).cloned();
 
 		self.should_continue = match executor {
