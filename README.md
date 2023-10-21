@@ -51,14 +51,7 @@ Let's talk if you're interested on working on this project!
 
 # Tests
 
-The following tests have been implemented:
-
-* `bytecode::tests::convert_halt`
-* `bytecode::tests::convert_load`
-* `machine::tests::execute_add`
-* `machine::tests::execute_sub`
-* `machine::tests::execute_mul`
-* `machine::tests::execute_div`
+*Coming soon*
 
 # License
 
