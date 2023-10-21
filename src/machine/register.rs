@@ -42,6 +42,20 @@ impl Registers {
     pub fn get(&self, name: &str) -> Option<&RegisterValue> {
         self.registers.get(name)
     }
+
+    pub fn allocate_register(&mut self) -> String {
+        // First, try to find an existing empty register.
+        for (name, value) in &self.registers {
+            if matches!(value, RegisterValue::Empty) {
+                return name.clone();
+            }
+        }
+
+        // If no empty register is found, create a new one.
+        let new_register_name = format!("r{}", self.registers.len() + 1);
+        self.registers.insert(new_register_name.clone(), RegisterValue::Empty);
+        new_register_name
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
