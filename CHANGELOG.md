@@ -30,13 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - Start using [human-readable changelogs](https://keepachangelog.com/en/1.0.0/).
-- A `Program` struct which decouples the bytecode encoding/decoding logic from the machine.
-- A new `executors` array containing a collection of structs which implement `Instruction` to abstract instruction execution into modules similar to how Pratt parsing works for text.
-- A `Value` enum which provides type tags for registers.
+- The `Program` struct, which represents a parsed bytecode executable, along with utility methods to facilitate the conversion between binary file format and in-memory representation.
+- The `Executor` trait, which modularizes instruction execution by associating opcodes with pieces of code executing instructions, along with the following new implementations:
+  - `HaltExecutor`
+  - `LoadExecutor`
+  - `CalculateExecutor`
+  - `InterruptExecutor`
+- A new `executors` hash map in `Strontium` associating opcodes with `Executor` implementations.
+- A `Registers` struct which stores register values and allocates new slots if needed.
+- A `RegisterValue` enum which provides type tags for registers.
+- Conversion utilities to convert `Instruction`s to a vector of bytes.
 
 ### Changed
-- Use new banner hosted on Scaleway.
+- Replace the old `Memory` struct in favor of typed registers for atomic and complex data types. All virtual machine state is now stored in the in the `registers` property of the `Strontium` struct, including the bytecode and instruction pointer.
 
 ### Removed
 - GitLab CI configuration.
-- The `Memory` struct was removed in favor of dynamically typed registers.
