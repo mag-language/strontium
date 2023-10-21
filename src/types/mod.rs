@@ -13,4 +13,5 @@ pub enum StrontiumError {
 	UnexpectedEof,
 	/// The type of a register does not match the provided value.
 	TypeMismatch,
+	InvalidUtf8String,
 }
