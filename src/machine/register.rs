@@ -18,6 +18,15 @@ impl Registers {
         // Create array containing program bytecode.
         registers.insert("bc".to_string(), Array(Vec::new()));
 
+        registers.insert("r1".to_string(), Empty);
+        registers.insert("r2".to_string(), Empty);
+        registers.insert("r3".to_string(), Empty);
+        registers.insert("r4".to_string(), Empty);
+        registers.insert("r5".to_string(), Empty);
+        registers.insert("r6".to_string(), Empty);
+        registers.insert("r7".to_string(), Empty);
+        registers.insert("r8".to_string(), Empty);
+
         Self {
             registers,
         }
@@ -32,7 +41,7 @@ impl Registers {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum RegisterValue {
     Empty,
     /// Signed integer, 8 bit
