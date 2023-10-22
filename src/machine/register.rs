@@ -1,6 +1,6 @@
 use num_derive::{FromPrimitive, ToPrimitive};
 
-use std::collections::HashMap;
+use std::collections::{HashMap, BTreeMap};
 use std::string::String;
 use std::ops::Add;
 
@@ -9,12 +9,12 @@ use self::RegisterValue::*;
 #[derive(Debug, Clone)]
 pub struct Registers {
     /// A set of registers which can be resized dynamically.
-    pub registers: HashMap<String, RegisterValue>,
+    pub registers: BTreeMap<String, RegisterValue>,
 }
 
 impl Registers {
     pub fn new() -> Self {
-        let mut registers = HashMap::new();
+        let mut registers = BTreeMap::new();
 
         // Create instruction pointer.
         registers.insert("ip".to_string(), UInt64(0));
@@ -44,17 +44,33 @@ impl Registers {
     }
 
     pub fn allocate_register(&mut self) -> String {
-        // First, try to find an existing empty register.
-        for (name, value) in &self.registers {
-            if matches!(value, RegisterValue::Empty) {
-                return name.clone();
-            }
+        // Collect the names of empty registers
+        let empty_registers: Vec<String> = self.registers
+            .iter()
+            .filter_map(|(name, value)| {
+                if matches!(value, RegisterValue::Empty) {
+                    Some(name.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // If an empty register is found, mark it as occupied and return its name
+        if let Some(name) = empty_registers.first() {
+            self.registers.insert(name.clone(), UInt64(0));
+            return name.clone();
         }
 
-        // If no empty register is found, create a new one.
+        // If no empty register is found, create a new one
         let new_register_name = format!("r{}", self.registers.len() + 1);
-        self.registers.insert(new_register_name.clone(), RegisterValue::Empty);
+        self.registers.insert(new_register_name.clone(), UInt64(0)); // Mark as occupied
         new_register_name
+    }
+
+    // Add a method to free a register
+    pub fn free_register(&mut self, name: &str) {
+        self.registers.insert(name.to_string(), RegisterValue::Empty);
     }
 }
 
