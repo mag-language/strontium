@@ -13,7 +13,7 @@
 //! Performing a simple arithmetic operation like `2 + 3` can be expressed like this
 //! using Strontium instructions (and an assembler which does not exist yet):
 //!
-//! ```
+//! ```ignore
 //! LOAD::Int64 r1 2
 //! LOAD::Int64 r2 3
 //! ADD r1 r2 r3
