@@ -5,7 +5,7 @@
 
 Strontium is a bytecode machine with typed registers and multimethods for statically and dynamically typed programming languages.
 
-It is built primarily to support Mag as the underlying, executive portion of the language engine. Any Mag source code first runs through the parser, is then compiled to Strontium bytecode and finally interpreted by this virtual machine.
+It is built primarily to support [Mag](https://github.com/mag-language) as the underlying, executive portion of the language engine. Any Mag source code first runs through the parser, is then compiled to Strontium bytecode and finally interpreted by this virtual machine.
 
 ## Instruction Set Architecture
 
