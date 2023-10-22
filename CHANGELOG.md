@@ -28,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -->
 
 ## Unreleased
+
+## [0.6.0] - October 22, 2023
 ### Added
 - Start using [human-readable changelogs](https://keepachangelog.com/en/1.0.0/).
 - The `Program` struct, which represents a parsed bytecode executable, along with utility methods to facilitate the conversion between binary file format and in-memory representation.
