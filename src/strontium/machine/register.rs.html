@@ -182,9 +182,25 @@
 <a href="#182" id="182">182</a>
 <a href="#183" id="183">183</a>
 <a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>num_derive::{FromPrimitive, ToPrimitive};
 
-<span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::collections::{HashMap, BTreeMap};
 <span class="kw">use </span>std::string::String;
 <span class="kw">use </span>std::ops::Add;
 
@@ -193,12 +209,12 @@
 <span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>Registers {
     <span class="doccomment">/// A set of registers which can be resized dynamically.
-    </span><span class="kw">pub </span>registers: HashMap&lt;String, RegisterValue&gt;,
+    </span><span class="kw">pub </span>registers: BTreeMap&lt;String, RegisterValue&gt;,
 }
 
 <span class="kw">impl </span>Registers {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>registers = HashMap::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>registers = BTreeMap::new();
 
         <span class="comment">// Create instruction pointer.
         </span>registers.insert(<span class="string">&quot;ip&quot;</span>.to_string(), UInt64(<span class="number">0</span>));
@@ -228,17 +244,33 @@
     }
 
     <span class="kw">pub fn </span>allocate_register(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; String {
-        <span class="comment">// First, try to find an existing empty register.
-        </span><span class="kw">for </span>(name, value) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.registers {
-            <span class="kw">if </span><span class="macro">matches!</span>(value, RegisterValue::Empty) {
-                <span class="kw">return </span>name.clone();
-            }
+        <span class="comment">// Collect the names of empty registers
+        </span><span class="kw">let </span>empty_registers: Vec&lt;String&gt; = <span class="self">self</span>.registers
+            .iter()
+            .filter_map(|(name, value)| {
+                <span class="kw">if </span><span class="macro">matches!</span>(value, RegisterValue::Empty) {
+                    <span class="prelude-val">Some</span>(name.clone())
+                } <span class="kw">else </span>{
+                    <span class="prelude-val">None
+                </span>}
+            })
+            .collect();
+
+        <span class="comment">// If an empty register is found, mark it as occupied and return its name
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(name) = empty_registers.first() {
+            <span class="self">self</span>.registers.insert(name.clone(), UInt64(<span class="number">0</span>));
+            <span class="kw">return </span>name.clone();
         }
 
-        <span class="comment">// If no empty register is found, create a new one.
+        <span class="comment">// If no empty register is found, create a new one
         </span><span class="kw">let </span>new_register_name = <span class="macro">format!</span>(<span class="string">&quot;r{}&quot;</span>, <span class="self">self</span>.registers.len() + <span class="number">1</span>);
-        <span class="self">self</span>.registers.insert(new_register_name.clone(), RegisterValue::Empty);
-        new_register_name
+        <span class="self">self</span>.registers.insert(new_register_name.clone(), UInt64(<span class="number">0</span>)); <span class="comment">// Mark as occupied
+        </span>new_register_name
+    }
+
+    <span class="comment">// Add a method to free a register
+    </span><span class="kw">pub fn </span>free_register(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) {
+        <span class="self">self</span>.registers.insert(name.to_string(), RegisterValue::Empty);
     }
 }
 
