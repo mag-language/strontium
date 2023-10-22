@@ -224,20 +224,6 @@ impl Strontium {
 		bytecode[self.ip()]
 	}
 
-	fn advance(&mut self) -> bool {
-		let ip = self.ip();
-
-		if ip + 1 < self.bc().len() {
-			self.registers.set(
-				"ip",
-				RegisterValue::UInt64((self.ip + 1) as u64),
-			);
-			true
-		} else {
-			false
-		}
-	}
-
 	fn advance_by(&mut self, n: usize) -> Result<(), StrontiumError> {
 		let ip = self.ip().clone();
 		
