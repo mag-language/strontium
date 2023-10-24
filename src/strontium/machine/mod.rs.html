@@ -249,6 +249,14 @@
 <a href="#249" id="249">249</a>
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module contains the virtual machine which executes Strontium bytecode. The VM uses a set of typed 
 //! registers to do number arithmetic, a memory vector provides the storage space for anything else.
 
@@ -305,6 +313,7 @@
         executors.insert(Opcode::HALT, Rc::new(HaltExecutor));
         executors.insert(Opcode::LOAD, Rc::new(LoadExecutor));
         executors.insert(Opcode::CALCULATE, Rc::new(CalculateExecutor));
+        executors.insert(Opcode::INTERRUPT, Rc::new(InterruptExecutor));
 
 		<span class="self">Self </span>{
 			registers:  Registers::new(),
@@ -328,12 +337,15 @@
     }
 
 	<span class="doccomment">/// Execute a single instruction.
-    </span><span class="kw">pub fn </span>execute(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, StrontiumError&gt; {
-		<span class="kw">let </span>opcode: Opcode = <span class="self">self</span>.consume_u8()<span class="question-mark">?</span>.into();
+    </span><span class="kw">pub fn </span>execute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, instruction: Instruction) -&gt; <span class="prelude-ty">Result</span>&lt;bool, StrontiumError&gt; {
+		<span class="kw">let </span>opcode: Opcode = instruction.clone().into();
 		<span class="kw">let </span>executor = <span class="self">self</span>.executors.get(<span class="kw-2">&amp;</span>opcode).cloned();
 
 		<span class="self">self</span>.should_continue = <span class="kw">match </span>executor {
-			<span class="prelude-val">Some</span>(executor) =&gt; executor.execute(<span class="self">self</span>)<span class="question-mark">?</span>,
+			<span class="prelude-val">Some</span>(executor) =&gt; executor.execute(
+				<span class="self">self</span>,
+				instruction,
+			)<span class="question-mark">?</span>,
 			<span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(StrontiumError::IllegalOpcode(<span class="self">self</span>.peek())),
 		};
 
@@ -341,17 +353,19 @@
 	}
 
 	<span class="doccomment">/// Execute instructions until a `HALT` instruction is encountered.
-	</span><span class="kw">pub fn </span>execute_until_halt(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, StrontiumError&gt; {
-        <span class="self">self</span>.should_continue = <span class="bool-val">true</span>;
+</span><span class="comment">/*
+	pub fn execute_until_halt(&amp;mut self) -&gt; Result&lt;bool, StrontiumError&gt; {
+        self.should_continue = true;
 
-        <span class="kw">while </span><span class="self">self</span>.should_continue &amp;&amp; !<span class="self">self</span>.eof() {
-            <span class="self">self</span>.execute()<span class="question-mark">?</span>;
+        while self.should_continue &amp;&amp; !self.eof() {
+            self.execute()?;
         }
 
-        <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+        Ok(true)
     }
+*/
 
-	<span class="kw">fn </span>ip(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+	</span><span class="kw">fn </span>ip(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
 		<span class="kw">match </span><span class="self">self</span>.registers.get(<span class="string">&quot;ip&quot;</span>).unwrap() {
 			RegisterValue::UInt64(ip) =&gt; <span class="kw-2">*</span>ip <span class="kw">as </span>usize,
 			<span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
@@ -457,8 +471,10 @@
 	}
 
 	<span class="kw">pub fn </span>consume_string(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;String, StrontiumError&gt; {
+		<span class="macro">println!</span>(<span class="string">&quot;Consume String&quot;</span>);
 		<span class="comment">// First, consume the length of the string (assuming it&#39;s stored as a 32-bit unsigned integer)
 		</span><span class="kw">let </span>length = <span class="self">self</span>.consume_u32()<span class="question-mark">? </span><span class="kw">as </span>usize;
+		<span class="macro">println!</span>(<span class="string">&quot;Length: {}&quot;</span>, length);
 
 		<span class="comment">// Now, consume the actual string bytes
 		</span><span class="kw">let </span>bytes = <span class="self">self</span>.consume_bytes(length)<span class="question-mark">?</span>;
@@ -490,7 +506,7 @@
 	}
 
 	<span class="doccomment">/// Returns true when the instruction pointer is at the end of the memory array.
-	</span><span class="kw">fn </span>eof(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; bool {
+	</span><span class="kw">fn </span>_eof(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; bool {
 		<span class="kw">let </span>ip = <span class="self">self</span>.ip().clone();
 		ip &gt; <span class="self">self</span>.bc().len()
 	}
