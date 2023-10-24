@@ -2,7 +2,8 @@ use num_derive::{FromPrimitive, ToPrimitive};
 
 use std::collections::{HashMap, BTreeMap};
 use std::string::String;
-use std::ops::Add;
+use std::ops::{Add, Sub, Mul, Div};
+use serde::{Serialize, Deserialize};
 
 use self::RegisterValue::*;
 
@@ -74,7 +75,7 @@ impl Registers {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum RegisterValue {
     Empty,
     /// Signed integer, 8 bit
@@ -133,27 +134,66 @@ impl Into<Vec<u8>> for RegisterValue {
     fn into(self) -> Vec<u8> {
         let mut bytes = Vec::new();
         match self {
-            RegisterValue::Int32(i) => {
-                bytes.push(1); // Type tag for Int32
+            RegisterValue::Empty => {
+                bytes.push(1);
+            },
+            RegisterValue::Int8(i) => {
+                bytes.push(2); // Type tag for Int32
                 bytes.extend_from_slice(&i.to_le_bytes());
-            }
-            RegisterValue::Float64(f) => {
-                bytes.push(2); // Type tag for Float64
+            },
+            RegisterValue::Int16(i) => {
+                bytes.push(3); // Type tag for Int32
+                bytes.extend_from_slice(&i.to_le_bytes());
+            },
+            RegisterValue::Int32(i) => {
+                bytes.push(4); // Type tag for Int32
+                bytes.extend_from_slice(&i.to_le_bytes());
+            },
+            RegisterValue::Int64(i) => {
+                bytes.push(5); // Type tag for Int32
+                bytes.extend_from_slice(&i.to_le_bytes());
+            },
+            RegisterValue::UInt8(i) => {
+                bytes.push(6); // Type tag for Int32
+                bytes.extend_from_slice(&i.to_le_bytes());
+            },
+            RegisterValue::UInt16(i) => {
+                bytes.push(7); // Type tag for Int32
+                bytes.extend_from_slice(&i.to_le_bytes());
+            },
+            RegisterValue::UInt32(i) => {
+                bytes.push(8); // Type tag for Int32
+                bytes.extend_from_slice(&i.to_le_bytes());
+            },
+            RegisterValue::UInt64(i) => {
+                bytes.push(9); // Type tag for Int32
+                bytes.extend_from_slice(&i.to_le_bytes());
+            },
+            RegisterValue::Float32(f) => {
+                bytes.push(10); // Type tag for Float64
                 bytes.extend_from_slice(&f.to_le_bytes());
-            }
+            },
+            RegisterValue::Float64(f) => {
+                bytes.push(11); // Type tag for Float64
+                bytes.extend_from_slice(&f.to_le_bytes());
+            },
             RegisterValue::String(s) => {
-                bytes.push(3); // Type tag for String
+                bytes.push(12); // Type tag for String
                 let string_bytes = s.into_bytes();
                 let length = string_bytes.len() as u32;
                 bytes.extend_from_slice(&length.to_le_bytes());
                 bytes.extend_from_slice(&string_bytes);
-            }
+            },
             RegisterValue::Boolean(b) => {
                 bytes.push(4); // Type tag for Boolean
                 bytes.push(b as u8);
-            }
-            // ... handle other variants as needed
-            _ => unimplemented!(), // or provide a default value or error
+            },
+            RegisterValue::Map(_) => {
+                println!("map register type is unimplemented");
+            },
+            RegisterValue::Array(_) => {
+                println!("array register type is unimplemented");
+            },
         }
         bytes
     }
@@ -175,6 +215,88 @@ impl Add for RegisterValue {
             (Self::Float32(a), Self::Float32(b)) => Self::Float32(a + b),
             (Self::Float64(a), Self::Float64(b)) => Self::Float64(a + b),
             _ => panic!("Incompatible types for addition"),
+        }
+    }
+}
+
+impl Sub for RegisterValue {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Int8(a), Self::Int8(b)) => Self::Int8(a.wrapping_sub(b)),
+            (Self::Int16(a), Self::Int16(b)) => Self::Int16(a.wrapping_sub(b)),
+            (Self::Int32(a), Self::Int32(b)) => Self::Int32(a.wrapping_sub(b)),
+            (Self::Int64(a), Self::Int64(b)) => Self::Int64(a.wrapping_sub(b)),
+            (Self::UInt8(a), Self::UInt8(b)) => Self::UInt8(a.wrapping_sub(b)),
+            (Self::UInt16(a), Self::UInt16(b)) => Self::UInt16(a.wrapping_sub(b)),
+            (Self::UInt32(a), Self::UInt32(b)) => Self::UInt32(a.wrapping_sub(b)),
+            (Self::UInt64(a), Self::UInt64(b)) => Self::UInt64(a.wrapping_sub(b)),
+            (Self::Float32(a), Self::Float32(b)) => Self::Float32(a - b),
+            (Self::Float64(a), Self::Float64(b)) => Self::Float64(a - b),
+            _ => panic!("Incompatible types for subtraction"),
+        }
+    }
+}
+
+impl Mul for RegisterValue {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Int8(a), Self::Int8(b)) => Self::Int8(a.wrapping_mul(b)),
+            (Self::Int16(a), Self::Int16(b)) => Self::Int16(a.wrapping_mul(b)),
+            (Self::Int32(a), Self::Int32(b)) => Self::Int32(a.wrapping_mul(b)),
+            (Self::Int64(a), Self::Int64(b)) => Self::Int64(a.wrapping_mul(b)),
+            (Self::UInt8(a), Self::UInt8(b)) => Self::UInt8(a.wrapping_mul(b)),
+            (Self::UInt16(a), Self::UInt16(b)) => Self::UInt16(a.wrapping_mul(b)),
+            (Self::UInt32(a), Self::UInt32(b)) => Self::UInt32(a.wrapping_mul(b)),
+            (Self::UInt64(a), Self::UInt64(b)) => Self::UInt64(a.wrapping_mul(b)),
+            (Self::Float32(a), Self::Float32(b)) => Self::Float32(a * b),
+            (Self::Float64(a), Self::Float64(b)) => Self::Float64(a * b),
+            _ => panic!("Incompatible types for multiplication"),
+        }
+    }
+}
+
+impl Div for RegisterValue {
+    type Output = Self;
+
+    fn div(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Int8(a), Self::Int8(b)) => Self::Int8(a.wrapping_div(b)),
+            (Self::Int16(a), Self::Int16(b)) => Self::Int16(a.wrapping_div(b)),
+            (Self::Int32(a), Self::Int32(b)) => Self::Int32(a.wrapping_div(b)),
+            (Self::Int64(a), Self::Int64(b)) => Self::Int64(a.wrapping_div(b)),
+            (Self::UInt8(a), Self::UInt8(b)) => Self::UInt8(a.wrapping_div(b)),
+            (Self::UInt16(a), Self::UInt16(b)) => Self::UInt16(a.wrapping_div(b)),
+            (Self::UInt32(a), Self::UInt32(b)) => Self::UInt32(a.wrapping_div(b)),
+            (Self::UInt64(a), Self::UInt64(b)) => Self::UInt64(a.wrapping_div(b)),
+            (Self::Float32(a), Self::Float32(b)) => Self::Float32(a / b),
+            (Self::Float64(a), Self::Float64(b)) => Self::Float64(a / b),
+            _ => panic!("Incompatible types for division"),
+        }
+    }
+}
+
+impl std::fmt::Display for RegisterValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RegisterValue::Empty => write!(f, "Empty"),
+            RegisterValue::Int8(i) => write!(f, "{}", i),
+            RegisterValue::Int16(i) => write!(f, "{}", i),
+            RegisterValue::Int32(i) => write!(f, "{}", i),
+            RegisterValue::Int64(i) => write!(f, "{}", i),
+            RegisterValue::UInt8(i) => write!(f, "{}", i),
+            RegisterValue::UInt16(i) => write!(f, "{}", i),
+            RegisterValue::UInt32(i) => write!(f, "{}", i),
+            RegisterValue::UInt64(i) => write!(f, "{}", i),
+            RegisterValue::Float32(n) => write!(f, "{}", n),
+            RegisterValue::Float64(n) => write!(f, "{}", n),
+            RegisterValue::String(s) => write!(f, "{}", s),
+            RegisterValue::Boolean(b) => write!(f, "{}", b),
+            RegisterValue::Map(m) => write!(f, "{:?}", m),
+            RegisterValue::Array(a) => write!(f, "{:?}", a),
         }
     }
 }

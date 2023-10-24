@@ -1,4 +1,5 @@
 use crate::machine::{Executor, Strontium, StrontiumError};
+use crate::Instruction;
 
 /// Stop all code execution immediately.
 ///
@@ -8,7 +9,7 @@ use crate::machine::{Executor, Strontium, StrontiumError};
 pub struct HaltExecutor;
 
 impl Executor for HaltExecutor {
-    fn execute(&self, _machine: &mut Strontium) -> Result<bool, StrontiumError> {
+    fn execute(&self, _machine: &mut Strontium, _instruction: Instruction) -> Result<bool, StrontiumError> {
         Ok(false)
     }
 }

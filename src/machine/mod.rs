@@ -54,6 +54,7 @@ impl Strontium {
         executors.insert(Opcode::HALT, Rc::new(HaltExecutor));
         executors.insert(Opcode::LOAD, Rc::new(LoadExecutor));
         executors.insert(Opcode::CALCULATE, Rc::new(CalculateExecutor));
+        executors.insert(Opcode::INTERRUPT, Rc::new(InterruptExecutor));
 
 		Self {
 			registers:  Registers::new(),
@@ -77,12 +78,15 @@ impl Strontium {
     }
 
 	/// Execute a single instruction.
-    pub fn execute(&mut self) -> Result<bool, StrontiumError> {
-		let opcode: Opcode = self.consume_u8()?.into();
+    pub fn execute(&mut self, instruction: Instruction) -> Result<bool, StrontiumError> {
+		let opcode: Opcode = instruction.clone().into();
 		let executor = self.executors.get(&opcode).cloned();
 
 		self.should_continue = match executor {
-			Some(executor) => executor.execute(self)?,
+			Some(executor) => executor.execute(
+				self,
+				instruction,
+			)?,
 			None => return Err(StrontiumError::IllegalOpcode(self.peek())),
 		};
 
@@ -90,6 +94,7 @@ impl Strontium {
 	}
 
 	/// Execute instructions until a `HALT` instruction is encountered.
+/*
 	pub fn execute_until_halt(&mut self) -> Result<bool, StrontiumError> {
         self.should_continue = true;
 
@@ -99,6 +104,7 @@ impl Strontium {
 
         Ok(true)
     }
+*/
 
 	fn ip(&self) -> usize {
 		match self.registers.get("ip").unwrap() {
@@ -206,8 +212,10 @@ impl Strontium {
 	}
 
 	pub fn consume_string(&mut self) -> Result<String, StrontiumError> {
+		println!("Consume String");
 		// First, consume the length of the string (assuming it's stored as a 32-bit unsigned integer)
 		let length = self.consume_u32()? as usize;
+		println!("Length: {}", length);
 
 		// Now, consume the actual string bytes
 		let bytes = self.consume_bytes(length)?;
@@ -239,7 +247,7 @@ impl Strontium {
 	}
 
 	/// Returns true when the instruction pointer is at the end of the memory array.
-	fn eof(&mut self) -> bool {
+	fn _eof(&mut self) -> bool {
 		let ip = self.ip().clone();
 		ip > self.bc().len()
 	}

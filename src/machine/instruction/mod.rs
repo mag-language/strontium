@@ -1,35 +1,47 @@
-use num_derive::{FromPrimitive, ToPrimitive};
+use serde::{Serialize, Deserialize};
 
 use crate::types::StrontiumError;
-use super::RegisterValue;
+use crate::machine::opcode::Opcode;
+use super::{Strontium, RegisterValue};
 
 mod executors;
 pub use self::executors::*;
 
-use super::Strontium;
-
 pub trait Executor {
-    fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError>;
+    fn execute(
+		&self,
+		machine: &mut Strontium,
+		instruction: Instruction,
+	) -> Result<bool, StrontiumError>;
 }
 
 
 /// A signal indicating that an event needs immediate attention. This enumeration
 /// contains the interrupt types supported by the virtual machine.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Interrupt {
 	/// The address to print to or read from
 	pub address: String,
 	pub kind: InterruptKind,
 }
 
-#[derive(Debug, Clone, PartialEq, ToPrimitive, FromPrimitive)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum InterruptKind {
-	Print = 200,
-	Read = 201,
+	Print,
+	Read,
+}
+
+impl Into<u8> for InterruptKind {
+	fn into(self) -> u8 {
+		match self {
+			InterruptKind::Print => 0,
+			InterruptKind::Read => 1,
+		}
+	}
 }
 
 /// Represents a callable machine instruction
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Instruction {
 	/// Stop all further execution
 	HALT,
@@ -113,125 +125,29 @@ pub enum Instruction {
 	RETURN {},
 }
 
-impl Into<Vec<u8>> for Instruction {
-	fn into(self) -> Vec<u8> {
-		let mut bytecode = vec![];
-
+impl Into<Opcode> for Instruction {
+	fn into(self) -> Opcode {
 		match self {
-			Instruction::HALT => {
-				bytecode.push(0);
-			},
-
-			Instruction::LOAD { value, register } => {
-				bytecode.push(1);
-				bytecode.append(&mut value.into());
-				bytecode.append(&mut register.into_bytes());
-			},
-
-			Instruction::MOVE { source, destination } => {
-				bytecode.push(2);
-				bytecode.append(&mut source.into_bytes());
-				bytecode.append(&mut destination.into_bytes());
-			},
-
-			Instruction::COPY { source, destination } => {
-				bytecode.push(3);
-				bytecode.append(&mut source.into_bytes());
-				bytecode.append(&mut destination.into_bytes());
-			},
-
-			Instruction::PUSH { value, destination } => {
-				bytecode.push(12);
-				bytecode.append(&mut value.into());
-				bytecode.append(&mut destination.into_bytes());
-			},
-
-			Instruction::APPEND { value, destination } => {
-				bytecode.push(13);
-				bytecode.push(value.len() as u8);
-				for val in value {
-					bytecode.append(&mut val.into());
-				}
-				bytecode.append(&mut destination.into_bytes());
-			},
-
-			Instruction::CALCULATE { method, operand1, operand2, destination } => {
-				bytecode.push(4);
-				bytecode.push(method.into());
-				bytecode.append(&mut operand1.into_bytes());
-				bytecode.append(&mut operand2.into_bytes());
-				bytecode.append(&mut destination.into_bytes());
-			},
-
-			Instruction::COMPARE { method, operand1, operand2, destination } => {
-				bytecode.push(5);
-				bytecode.push(method.into());
-				bytecode.append(&mut operand1.into_bytes());
-				bytecode.append(&mut operand2.into_bytes());
-				bytecode.append(&mut destination.into_bytes());
-			},
-
-			Instruction::BITWISE { method } => {
-				bytecode.push(6);
-				match method {
-					BitwiseMethod::AND { a, b, out, len } => {
-						bytecode.push(0);
-						bytecode.append(&mut a.into_bytes());
-						bytecode.append(&mut b.into_bytes());
-						bytecode.append(&mut out.into_bytes());
-						bytecode.push(len as u8);
-					},
-
-					BitwiseMethod::OR { a, b, out, len } => {
-						bytecode.push(1);
-						bytecode.append(&mut a.into_bytes());
-						bytecode.append(&mut b.into_bytes());
-						bytecode.append(&mut out.into_bytes());
-						bytecode.push(len as u8);
-					},
-
-					BitwiseMethod::XOR { a, b, out, len } => {
-						bytecode.push(2);
-						bytecode.append(&mut a.into_bytes());
-						bytecode.append(&mut b.into_bytes());
-						bytecode.append(&mut out.into_bytes());
-						bytecode.push(len as u8);
-					},
-
-					BitwiseMethod::NOT { a, out, len } => {
-						bytecode.push(3);
-						bytecode.append(&mut a.into_bytes());
-						bytecode.append(&mut out.into_bytes());
-						bytecode.push(len as u8);
-					},
-
-					BitwiseMethod::LSH { a, out, amount, len } => {
-						bytecode.push(4);
-						bytecode.append(&mut a.into_bytes());
-						bytecode.append(&mut out.into_bytes());
-						bytecode.push(amount as u8);
-						bytecode.push(len as u8);
-					},
-
-					BitwiseMethod::RSH { a, out, amount, len } => {
-						bytecode.push(5);
-						bytecode.append(&mut a.into_bytes());
-						bytecode.append(&mut out.into_bytes());
-						bytecode.push(amount as u8);
-						bytecode.push(len as u8);
-					},
-				}
-			},
-
-			_ => unimplemented!("Opcode not implemented"),
+			Instruction::HALT => Opcode::HALT,
+			Instruction::LOAD { .. } => Opcode::LOAD,
+			Instruction::MOVE { .. } => Opcode::MOVE,
+			Instruction::COPY { .. } => Opcode::COPY,
+			Instruction::CALCULATE { .. } => Opcode::CALCULATE,
+			Instruction::COMPARE { .. } => Opcode::COMPARE,
+			Instruction::BITWISE { .. } => Opcode::BITWISE,
+			Instruction::JUMP { .. } => Opcode::JUMP,
+			Instruction::JUMPC { .. } => Opcode::JUMPC,
+			Instruction::INTERRUPT { .. } => Opcode::INTERRUPT,
+			Instruction::CALL { .. } => Opcode::CALL,
+			Instruction::RETURN { .. } => Opcode::RETURN,
+			Instruction::PUSH { .. } => Opcode::PUSH,
+			Instruction::APPEND { .. } => Opcode::APPEND,
 		}
-
-		bytecode
 	}
 }
 
 /// Basic arithmetic operations which act on two registers and write the result to a third.
-#[derive(Debug, Clone, PartialEq, ToPrimitive, FromPrimitive)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum CalculationMethod {
 	ADD,
 	SUBTRACT,
@@ -254,7 +170,7 @@ impl Into<u8> for CalculationMethod {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq, ToPrimitive, FromPrimitive)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ComparisonMethod {
 	EQ,
 	NEQ,
@@ -277,7 +193,7 @@ impl Into<u8> for ComparisonMethod {
 	}
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[allow(non_camel_case_types)]
 pub enum BitwiseMethod {
 	AND {

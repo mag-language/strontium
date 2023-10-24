@@ -28,8 +28,8 @@ pub enum Opcode {
 	/// This opcode is followed by three 16-bit unsigned integers.
 	COMPARE,
 	/// Perform a bitwise operation (`AND`, `OR`, `XOR`, `NOT`, `LSH`, `RSH`) on two or 
-	/// three addresses, or perform a memory operation (`GROW`, `SHRINK`, `SET`, `UNSET`)
-	MEMORY,
+	/// three addresses.
+	BITWISE,
 	/// Set the program counter to a value from a location, using one of the 
 	/// methods (`absolute`, `forward`, `backward`)
 	JUMP,
@@ -55,7 +55,7 @@ impl From<u8> for Opcode {
 			3 => COPY,
 			4 => CALCULATE,
 			5 => COMPARE,
-			6 => MEMORY,
+			6 => BITWISE,
 			7 => JUMP,
 			8 => JUMPC,
 			9 => INTERRUPT,
@@ -65,6 +65,29 @@ impl From<u8> for Opcode {
 			13 => APPEND,
 
 			_ => ILLEGAL,
+		}
+	}
+}
+
+impl Into<u8> for Opcode {
+	fn into(self) -> u8 {
+		match self {
+			HALT => 0,
+			LOAD => 1,
+			MOVE => 2,
+			COPY => 3,
+			CALCULATE => 4,
+			COMPARE => 5,
+			BITWISE => 6,
+			JUMP => 7,
+			JUMPC => 8,
+			INTERRUPT => 9,
+			CALL => 10,
+			RETURN => 11,
+			PUSH => 12,
+			APPEND => 13,
+
+			ILLEGAL => 255,
 		}
 	}
 }
