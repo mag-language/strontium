@@ -46,8 +46,7 @@ This README will soon be updated with further documentation.
 
 # Project Status
 
-This project is still in an early stage of development and there may be breaking changes in 
-the future. Most of the listed instructions have been implemented, but interrupts, copy and move are still missing.
+**_This is still very much in the alpha phase, so the semantics and API surface of this library will change dynamically over time. Do not rely on this in any production-critical way and expect earth-shattering change._**
 
 Let's talk if you're interested on working on this project!
 
