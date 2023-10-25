@@ -6,7 +6,7 @@ edition = "2018"
 authors = ["Moritz Riede <moritz@mriede.com>"]
 repository = "https://github.com/mag-language/strontium"
 readme  = "README.md"
-license-file = "LICENSE"
+license = "MIT"
 keywords = ["vm", "language", "bytecode", "p-code-machine"]
 
 # [[bin]]
