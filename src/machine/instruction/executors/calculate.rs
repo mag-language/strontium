@@ -14,18 +14,18 @@ pub struct CalculateExecutor;
 impl Executor for CalculateExecutor {
     fn execute(&self, machine: &mut Strontium, instruction: Instruction) -> Result<bool, StrontiumError> {
         if let Instruction::CALCULATE { method, operand1, operand2, destination } = instruction {
-            let source = machine.registers.get(&operand1);
-            let target = machine.registers.get(&operand2);
+            let op1 = machine.registers.get(&operand1);
+            let op2 = machine.registers.get(&operand2);
 
-            if let (Some(source), Some(target)) = (source, target) {
+            if let (Some(op1), Some(op2)) = (op1, op2) {
                 let result = match method {
-                    CalculationMethod::ADD => source.clone() + target.clone(),
-                    CalculationMethod::SUBTRACT => source.clone() - target.clone(),
-                    CalculationMethod::MULTIPLY => source.clone() * target.clone(),
-                    CalculationMethod::DIVIDE => source.clone() / target.clone(),
+                    CalculationMethod::ADD => op1.clone() + op2.clone(),
+                    CalculationMethod::SUBTRACT => op1.clone() - op2.clone(),
+                    CalculationMethod::MULTIPLY => op1.clone() * op2.clone(),
+                    CalculationMethod::DIVIDE => op1.clone() / op2.clone(),
 /*
-                    CalculationMethod::Modulo => source % target,
-                    CalculationMethod::Power => source.pow(target),
+                    CalculationMethod::Modulo => op1 % op2,
+                    CalculationMethod::Power => op1.pow(op2),
 */
                     _ => unimplemented!(),
                 };
