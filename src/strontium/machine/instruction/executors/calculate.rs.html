@@ -52,18 +52,18 @@
 <span class="kw">impl </span>Executor <span class="kw">for </span>CalculateExecutor {
     <span class="kw">fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, machine: <span class="kw-2">&amp;mut </span>Strontium, instruction: Instruction) -&gt; <span class="prelude-ty">Result</span>&lt;bool, StrontiumError&gt; {
         <span class="kw">if let </span>Instruction::CALCULATE { method, operand1, operand2, destination } = instruction {
-            <span class="kw">let </span>source = machine.registers.get(<span class="kw-2">&amp;</span>operand1);
-            <span class="kw">let </span>target = machine.registers.get(<span class="kw-2">&amp;</span>operand2);
+            <span class="kw">let </span>op1 = machine.registers.get(<span class="kw-2">&amp;</span>operand1);
+            <span class="kw">let </span>op2 = machine.registers.get(<span class="kw-2">&amp;</span>operand2);
 
-            <span class="kw">if let </span>(<span class="prelude-val">Some</span>(source), <span class="prelude-val">Some</span>(target)) = (source, target) {
+            <span class="kw">if let </span>(<span class="prelude-val">Some</span>(op1), <span class="prelude-val">Some</span>(op2)) = (op1, op2) {
                 <span class="kw">let </span>result = <span class="kw">match </span>method {
-                    CalculationMethod::ADD =&gt; source.clone() + target.clone(),
-                    CalculationMethod::SUBTRACT =&gt; source.clone() - target.clone(),
-                    CalculationMethod::MULTIPLY =&gt; source.clone() * target.clone(),
-                    CalculationMethod::DIVIDE =&gt; source.clone() / target.clone(),
+                    CalculationMethod::ADD =&gt; op1.clone() + op2.clone(),
+                    CalculationMethod::SUBTRACT =&gt; op1.clone() - op2.clone(),
+                    CalculationMethod::MULTIPLY =&gt; op1.clone() * op2.clone(),
+                    CalculationMethod::DIVIDE =&gt; op1.clone() / op2.clone(),
 <span class="comment">/*
-                    CalculationMethod::Modulo =&gt; source % target,
-                    CalculationMethod::Power =&gt; source.pow(target),
+                    CalculationMethod::Modulo =&gt; op1 % op2,
+                    CalculationMethod::Power =&gt; op1.pow(op2),
 */
                     </span><span class="kw">_ </span>=&gt; <span class="macro">unimplemented!</span>(),
                 };
