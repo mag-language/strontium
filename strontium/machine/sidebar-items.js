@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Value"],"mod":["instruction","opcode","register"],"struct":["StackFrame","Strontium"]};
+window.SIDEBAR_ITEMS = {"enum":["Value"],"mod":["bytecode","instruction","opcode","register"],"struct":["StackFrame","Strontium"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["RegisterType","RegisterValue"],"struct":["Registers"]};
+window.SIDEBAR_ITEMS = {"enum":["RegisterType","RegisterValue","RegisterValueError"],"struct":["Registers"]};

@@ -257,10 +257,12 @@
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
 <a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This module contains the virtual machine which executes Strontium bytecode. The VM uses a set of typed 
 //! registers to do number arithmetic, a memory vector provides the storage space for anything else.
 
-</span><span class="kw">pub mod </span>instruction;
+</span><span class="kw">pub mod </span>bytecode;
+<span class="kw">pub mod </span>instruction;
 <span class="kw">pub mod </span>opcode;
 <span class="kw">pub mod </span>register;
 
@@ -338,7 +340,7 @@
 
 	<span class="doccomment">/// Execute a single instruction.
     </span><span class="kw">pub fn </span>execute(<span class="kw-2">&amp;mut </span><span class="self">self</span>, instruction: Instruction) -&gt; <span class="prelude-ty">Result</span>&lt;bool, StrontiumError&gt; {
-		<span class="kw">let </span>opcode: Opcode = instruction.clone().into();
+		<span class="kw">let </span>opcode: Opcode = instruction.get_opcode();
 		<span class="kw">let </span>executor = <span class="self">self</span>.executors.get(<span class="kw-2">&amp;</span>opcode).cloned();
 
 		<span class="self">self</span>.should_continue = <span class="kw">match </span>executor {

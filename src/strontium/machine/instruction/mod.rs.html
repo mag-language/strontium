@@ -237,7 +237,77 @@
 <a href="#237" id="237">237</a>
 <a href="#238" id="238">238</a>
 <a href="#239" id="239">239</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Serialize, Deserialize};
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
+<a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::convert::TryFrom;
+
+<span class="kw">use </span>serde::{Serialize, Deserialize};
 
 <span class="kw">use </span><span class="kw">crate</span>::types::StrontiumError;
 <span class="kw">use </span><span class="kw">crate</span>::machine::opcode::Opcode;
@@ -275,6 +345,17 @@
 		<span class="kw">match </span><span class="self">self </span>{
 			InterruptKind::Print =&gt; <span class="number">0</span>,
 			InterruptKind::Read =&gt; <span class="number">1</span>,
+		}
+	}
+}
+
+
+<span class="kw">impl </span>From&lt;u8&gt; <span class="kw">for </span>InterruptKind {
+	<span class="kw">fn </span>from(byte: u8) -&gt; InterruptKind {
+		<span class="kw">match </span>byte {
+			<span class="number">0 </span>=&gt; InterruptKind::Print,
+			<span class="number">1 </span>=&gt; InterruptKind::Read,
+			<span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
 		}
 	}
 }
@@ -339,24 +420,25 @@
 		destination: String,
 	},
 
-	<span class="comment">// Perform a memory operation (`and`, `or`, `xor`, `not`, `lsh`, `rsh`, `grow`, `shrink`, `set`, or `unset`)
+	<span class="comment">// Perform a memory operation (`and`, `or`, `xor`, `not`, `lsh`, `rsh`)
 	</span>BITWISE {
 		method: BitwiseMethod
 	},
 
 	<span class="doccomment">/// Set the program counter to the given value
 	</span>JUMP {
-		destination: usize,
+		destination: u32,
 	},
 
 	<span class="doccomment">/// Set the program counter to a value if the given byte has the value of `1`
 	</span>JUMPC {
-		destination: usize,
+		destination: u32,
 		conditional_address: String,
 	},
 
 	<span class="doccomment">/// Set off an interrupt, for example to print a character to standard output
 	</span>INTERRUPT {
+		address: String,
 		interrupt: Interrupt,
 	},
 
@@ -364,8 +446,8 @@
 	RETURN {},
 }
 
-<span class="kw">impl </span>Into&lt;Opcode&gt; <span class="kw">for </span>Instruction {
-	<span class="kw">fn </span>into(<span class="self">self</span>) -&gt; Opcode {
+<span class="kw">impl </span>Instruction {
+	<span class="kw">pub fn </span>get_opcode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Opcode {
 		<span class="kw">match </span><span class="self">self </span>{
 			Instruction::HALT =&gt; Opcode::HALT,
 			Instruction::LOAD { .. } =&gt; Opcode::LOAD,
@@ -383,6 +465,24 @@
 			Instruction::APPEND { .. } =&gt; Opcode::APPEND,
 		}
 	}
+}
+
+<span class="kw">impl </span>TryFrom&lt;Vec&lt;u8&gt;&gt; <span class="kw">for </span>Instruction {
+	<span class="kw">type </span>Error = BytecodeError;
+	<span class="comment">// Implement basic method structure
+	</span><span class="kw">fn </span>try_from(bytes: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Instruction, BytecodeError&gt; {
+		<span class="kw">let </span>opcode: Opcode = bytes[<span class="number">0</span>].into();
+
+		<span class="kw">match </span>opcode {
+			Opcode::HALT =&gt; <span class="prelude-val">Ok</span>(Instruction::HALT),
+			<span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(BytecodeError::InvalidOpcode(bytes[<span class="number">0</span>])),
+		}
+	}
+}
+<span class="attr">#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+</span><span class="kw">pub enum </span>BytecodeError {
+	UnexpectedEof,
+	InvalidOpcode(u8),
 }
 
 <span class="doccomment">/// Basic arithmetic operations which act on two registers and write the result to a third.
@@ -405,6 +505,20 @@
 			CalculationMethod::DIVIDE =&gt; <span class="number">3</span>,
 			CalculationMethod::POWER =&gt; <span class="number">4</span>,
 			CalculationMethod::MODULO =&gt; <span class="number">5</span>,
+		}
+	}
+}
+
+<span class="kw">impl </span>From&lt;u8&gt; <span class="kw">for </span>CalculationMethod {
+	<span class="kw">fn </span>from(byte: u8) -&gt; CalculationMethod {
+		<span class="kw">match </span>byte {
+			<span class="number">0 </span>=&gt; CalculationMethod::ADD,
+			<span class="number">1 </span>=&gt; CalculationMethod::SUBTRACT,
+			<span class="number">2 </span>=&gt; CalculationMethod::MULTIPLY,
+			<span class="number">3 </span>=&gt; CalculationMethod::DIVIDE,
+			<span class="number">4 </span>=&gt; CalculationMethod::POWER,
+			<span class="number">5 </span>=&gt; CalculationMethod::MODULO,
+			<span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
 		}
 	}
 }
@@ -432,6 +546,21 @@
 	}
 }
 
+<span class="kw">impl </span>From&lt;u8&gt; <span class="kw">for </span>ComparisonMethod {
+	<span class="kw">fn </span>from(byte: u8) -&gt; ComparisonMethod {
+		<span class="kw">match </span>byte {
+			<span class="number">0 </span>=&gt; ComparisonMethod::EQ,
+			<span class="number">1 </span>=&gt; ComparisonMethod::NEQ,
+			<span class="number">2 </span>=&gt; ComparisonMethod::GT,
+			<span class="number">3 </span>=&gt; ComparisonMethod::GTE,
+			<span class="number">4 </span>=&gt; ComparisonMethod::LT,
+			<span class="number">5 </span>=&gt; ComparisonMethod::LTE,
+			<span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+		}
+	}
+
+}
+
 <span class="attr">#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[allow(non_camel_case_types)]
 </span><span class="kw">pub enum </span>BitwiseMethod {
@@ -439,40 +568,47 @@
 		a: String,
 		b: String,
 		out: String,
-		len: usize,
 	},
 
 	OR {
 		a: String,
 		b: String,
 		out: String,
-		len: usize,
 	},
 
 	XOR {
 		a: String,
 		b: String,
 		out: String,
-		len: usize,
 	},
 
 	NOT {
 		a: String,
 		out: String,
-		len: usize,
 	},
 
 	LSH {
 		a: String,
 		out: String,
-		amount: usize,
-		len: usize,
+		amount: u32,
 	},
 	
 	RSH {
 		a: String,
 		out: String,
-		amount: usize,
-		len: usize,
+		amount: u32,
 	},
+}
+
+<span class="kw">impl </span>BitwiseMethod {
+	<span class="kw">pub fn </span>get_method_byte(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
+		<span class="kw">match </span><span class="self">self </span>{
+			BitwiseMethod::AND { .. } =&gt; <span class="number">0</span>,
+			BitwiseMethod::OR { .. } =&gt; <span class="number">1</span>,
+			BitwiseMethod::XOR { .. } =&gt; <span class="number">2</span>,
+			BitwiseMethod::NOT { .. } =&gt; <span class="number">3</span>,
+			BitwiseMethod::LSH { .. } =&gt; <span class="number">4</span>,
+			BitwiseMethod::RSH { .. } =&gt; <span class="number">5</span>,
+		}
+	}
 }</code></pre></div></section></main></body></html>
