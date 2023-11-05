@@ -8,7 +8,7 @@ pub struct InterruptExecutor;
 
 impl Executor for InterruptExecutor {
     fn execute(&self, machine: &mut Strontium, instruction: Instruction) -> Result<bool, StrontiumError> {
-        if let Instruction::INTERRUPT { interrupt } = instruction {
+        if let Instruction::INTERRUPT { address: _, interrupt } = instruction {
             match interrupt.kind {
                 InterruptKind::Print => {
                     let value = machine.registers.get(&interrupt.address);
