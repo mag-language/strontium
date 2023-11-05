@@ -1,5 +1,8 @@
 use num_derive::{FromPrimitive, ToPrimitive};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
+use std::convert::TryFrom;
+use std::io::{Cursor, Read};
 use std::collections::{HashMap, BTreeMap};
 use std::string::String;
 use std::ops::{Add, Sub, Mul, Div};
@@ -154,19 +157,19 @@ impl Into<Vec<u8>> for RegisterValue {
                 bytes.extend_from_slice(&i.to_le_bytes());
             },
             RegisterValue::UInt8(i) => {
-                bytes.push(6); // Type tag for Int32
+                bytes.push(6); // Type tag for UInt8
                 bytes.extend_from_slice(&i.to_le_bytes());
             },
             RegisterValue::UInt16(i) => {
-                bytes.push(7); // Type tag for Int32
+                bytes.push(7); // Type tag for UInt16
                 bytes.extend_from_slice(&i.to_le_bytes());
             },
             RegisterValue::UInt32(i) => {
-                bytes.push(8); // Type tag for Int32
+                bytes.push(8); // Type tag for UInt32
                 bytes.extend_from_slice(&i.to_le_bytes());
             },
             RegisterValue::UInt64(i) => {
-                bytes.push(9); // Type tag for Int32
+                bytes.push(9); // Type tag for UInt64
                 bytes.extend_from_slice(&i.to_le_bytes());
             },
             RegisterValue::Float32(f) => {
@@ -197,6 +200,50 @@ impl Into<Vec<u8>> for RegisterValue {
         }
         bytes
     }
+}
+
+impl TryFrom<Vec<u8>> for RegisterValue {
+    type Error = RegisterValueError;
+
+    fn try_from(mut bytes: Vec<u8>) -> Result<Self, Self::Error> {
+        if bytes.is_empty() {
+            return Err(RegisterValueError::NotEnoughBytes);
+        }
+
+        let type_tag = bytes.remove(0);
+        let mut cursor = Cursor::new(bytes);
+
+        match type_tag {
+            1 => Ok(RegisterValue::Empty),
+            2 => Ok(RegisterValue::Int8(cursor.read_i8().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            3 => Ok(RegisterValue::Int16(cursor.read_i16::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            4 => Ok(RegisterValue::Int32(cursor.read_i32::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            5 => Ok(RegisterValue::Int64(cursor.read_i64::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            6 => Ok(RegisterValue::UInt8(cursor.read_u8().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            7 => Ok(RegisterValue::UInt16(cursor.read_u16::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            8 => Ok(RegisterValue::UInt32(cursor.read_u32::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            9 => Ok(RegisterValue::UInt64(cursor.read_u64::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            10 => Ok(RegisterValue::Float32(cursor.read_f32::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            11 => Ok(RegisterValue::Float64(cursor.read_f64::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            12 => {
+                let length = cursor.read_u32::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?;
+                let mut string_bytes = vec![0; length as usize];
+                cursor.read_exact(&mut string_bytes).map_err(|_| RegisterValueError::NotEnoughBytes)?;
+                let string = String::from_utf8(string_bytes).map_err(RegisterValueError::Utf8Error)?;
+                Ok(RegisterValue::String(string))
+            },
+            13 => Ok(RegisterValue::Boolean(cursor.read_u8().map_err(|_| RegisterValueError::NotEnoughBytes)? != 0)),
+            _ => Err(RegisterValueError::InvalidTypeTag),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum RegisterValueError {
+    InvalidTypeTag,
+    NotEnoughBytes,
+    Utf8Error(std::string::FromUtf8Error),
+    // Add other error types as needed
 }
 
 impl Add for RegisterValue {
