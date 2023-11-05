@@ -29,6 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- An actual bytecode format so we can convert `Instruction`s to bytes.
+
 ## [0.6.0] - October 22, 2023
 ### Added
 - Start using [human-readable changelogs](https://keepachangelog.com/en/1.0.0/).
