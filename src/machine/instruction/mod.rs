@@ -1,3 +1,5 @@
+use std::convert::TryFrom;
+
 use serde::{Serialize, Deserialize};
 
 use crate::types::StrontiumError;
@@ -36,6 +38,17 @@ impl Into<u8> for InterruptKind {
 		match self {
 			InterruptKind::Print => 0,
 			InterruptKind::Read => 1,
+		}
+	}
+}
+
+
+impl From<u8> for InterruptKind {
+	fn from(byte: u8) -> InterruptKind {
+		match byte {
+			0 => InterruptKind::Print,
+			1 => InterruptKind::Read,
+			_ => unreachable!(),
 		}
 	}
 }
@@ -100,24 +113,25 @@ pub enum Instruction {
 		destination: String,
 	},
 
-	// Perform a memory operation (`and`, `or`, `xor`, `not`, `lsh`, `rsh`, `grow`, `shrink`, `set`, or `unset`)
+	// Perform a memory operation (`and`, `or`, `xor`, `not`, `lsh`, `rsh`)
 	BITWISE {
 		method: BitwiseMethod
 	},
 
 	/// Set the program counter to the given value
 	JUMP {
-		destination: usize,
+		destination: u32,
 	},
 
 	/// Set the program counter to a value if the given byte has the value of `1`
 	JUMPC {
-		destination: usize,
+		destination: u32,
 		conditional_address: String,
 	},
 
 	/// Set off an interrupt, for example to print a character to standard output
 	INTERRUPT {
+		address: String,
 		interrupt: Interrupt,
 	},
 
@@ -125,8 +139,8 @@ pub enum Instruction {
 	RETURN {},
 }
 
-impl Into<Opcode> for Instruction {
-	fn into(self) -> Opcode {
+impl Instruction {
+	pub fn get_opcode(&self) -> Opcode {
 		match self {
 			Instruction::HALT => Opcode::HALT,
 			Instruction::LOAD { .. } => Opcode::LOAD,
@@ -144,6 +158,24 @@ impl Into<Opcode> for Instruction {
 			Instruction::APPEND { .. } => Opcode::APPEND,
 		}
 	}
+}
+
+impl TryFrom<Vec<u8>> for Instruction {
+	type Error = BytecodeError;
+	// Implement basic method structure
+	fn try_from(bytes: Vec<u8>) -> Result<Instruction, BytecodeError> {
+		let opcode: Opcode = bytes[0].into();
+
+		match opcode {
+			Opcode::HALT => Ok(Instruction::HALT),
+			_ => Err(BytecodeError::InvalidOpcode(bytes[0])),
+		}
+	}
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum BytecodeError {
+	UnexpectedEof,
+	InvalidOpcode(u8),
 }
 
 /// Basic arithmetic operations which act on two registers and write the result to a third.
@@ -166,6 +198,20 @@ impl Into<u8> for CalculationMethod {
 			CalculationMethod::DIVIDE => 3,
 			CalculationMethod::POWER => 4,
 			CalculationMethod::MODULO => 5,
+		}
+	}
+}
+
+impl From<u8> for CalculationMethod {
+	fn from(byte: u8) -> CalculationMethod {
+		match byte {
+			0 => CalculationMethod::ADD,
+			1 => CalculationMethod::SUBTRACT,
+			2 => CalculationMethod::MULTIPLY,
+			3 => CalculationMethod::DIVIDE,
+			4 => CalculationMethod::POWER,
+			5 => CalculationMethod::MODULO,
+			_ => unreachable!(),
 		}
 	}
 }
@@ -193,6 +239,21 @@ impl Into<u8> for ComparisonMethod {
 	}
 }
 
+impl From<u8> for ComparisonMethod {
+	fn from(byte: u8) -> ComparisonMethod {
+		match byte {
+			0 => ComparisonMethod::EQ,
+			1 => ComparisonMethod::NEQ,
+			2 => ComparisonMethod::GT,
+			3 => ComparisonMethod::GTE,
+			4 => ComparisonMethod::LT,
+			5 => ComparisonMethod::LTE,
+			_ => unreachable!(),
+		}
+	}
+
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[allow(non_camel_case_types)]
 pub enum BitwiseMethod {
@@ -200,40 +261,47 @@ pub enum BitwiseMethod {
 		a: String,
 		b: String,
 		out: String,
-		len: usize,
 	},
 
 	OR {
 		a: String,
 		b: String,
 		out: String,
-		len: usize,
 	},
 
 	XOR {
 		a: String,
 		b: String,
 		out: String,
-		len: usize,
 	},
 
 	NOT {
 		a: String,
 		out: String,
-		len: usize,
 	},
 
 	LSH {
 		a: String,
 		out: String,
-		amount: usize,
-		len: usize,
+		amount: u32,
 	},
 	
 	RSH {
 		a: String,
 		out: String,
-		amount: usize,
-		len: usize,
+		amount: u32,
 	},
+}
+
+impl BitwiseMethod {
+	pub fn get_method_byte(&self) -> u8 {
+		match self {
+			BitwiseMethod::AND { .. } => 0,
+			BitwiseMethod::OR { .. } => 1,
+			BitwiseMethod::XOR { .. } => 2,
+			BitwiseMethod::NOT { .. } => 3,
+			BitwiseMethod::LSH { .. } => 4,
+			BitwiseMethod::RSH { .. } => 5,
+		}
+	}
 }
