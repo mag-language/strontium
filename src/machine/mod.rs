@@ -1,6 +1,7 @@
 //! This module contains the virtual machine which executes Strontium bytecode. The VM uses a set of typed 
 //! registers to do number arithmetic, a memory vector provides the storage space for anything else.
 
+pub mod bytecode;
 pub mod instruction;
 pub mod opcode;
 pub mod register;
@@ -79,7 +80,7 @@ impl Strontium {
 
 	/// Execute a single instruction.
     pub fn execute(&mut self, instruction: Instruction) -> Result<bool, StrontiumError> {
-		let opcode: Opcode = instruction.clone().into();
+		let opcode: Opcode = instruction.get_opcode();
 		let executor = self.executors.get(&opcode).cloned();
 
 		self.should_continue = match executor {
