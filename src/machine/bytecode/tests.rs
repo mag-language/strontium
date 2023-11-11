@@ -9,11 +9,10 @@ use super::decode::BytecodeParser;
 /// Decode and re-encode a halt instruction.
 fn transcode_halt() {
     let ins = Instruction::HALT;
-    let mut decoded: Vec<u8> = ins.clone().into();
+    let decoded: Vec<u8> = ins.clone().into();
 
     assert_eq!(decoded.len(), 8);
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -25,11 +24,10 @@ fn transcode_load() {
         register: "r5".to_string(),
         value: RegisterValue::UInt64(42),
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
+    let decoded: Vec<u8> = ins.clone().into();
     println!("Decoded: {:?}", decoded);
 
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -41,9 +39,8 @@ fn transcode_move() {
         source: "r5".to_string(),
         destination: "r7".to_string(),
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let decoded: Vec<u8> = ins.clone().into();
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -54,9 +51,8 @@ fn transcode_copy() {
         source: "r2".to_string(),
         destination: "r9".to_string(),
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let decoded: Vec<u8> = ins.clone().into();
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -67,9 +63,8 @@ fn transcode_push() {
         destination: "r9".to_string(),
         value: RegisterValue::Float32(2.2),
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let decoded: Vec<u8> = ins.clone().into();
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -83,9 +78,8 @@ fn transcode_append() {
             RegisterValue::Float32(3.1415)
         ],
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let decoded: Vec<u8> = ins.clone().into();
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -98,9 +92,8 @@ fn transcode_calculate() {
         operand2: "r3".to_string(),
         destination: "r4".to_string(),
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let decoded: Vec<u8> = ins.clone().into();
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -113,9 +106,8 @@ fn transcode_compare() {
         operand2: "r3".to_string(),
         destination: "r4".to_string(),
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let decoded: Vec<u8> = ins.clone().into();
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -129,9 +121,8 @@ fn transcode_bitwise_and() {
             out: "r4".to_string(),
         }
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let decoded: Vec<u8> = ins.clone().into();
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -141,11 +132,10 @@ fn transcode_jump() {
     let ins = Instruction::JUMP {
         destination: 42,
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
+    let decoded: Vec<u8> = ins.clone().into();
 
     assert_eq!(decoded.len(), 5);
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
@@ -156,11 +146,10 @@ fn transcode_jumpc() {
         destination: 42,
         conditional_address: "r5".to_string(),
     };
-    let mut decoded: Vec<u8> = ins.clone().into();
+    let decoded: Vec<u8> = ins.clone().into();
 
     assert_eq!(decoded.len(), 8);
-    let mut parser = BytecodeParser::new();
-    parser.add_bytecode(&mut decoded);
+    let mut parser = BytecodeParser::new(decoded);
 
     assert_eq!(parser.parse_instruction().unwrap(), ins);
 }
