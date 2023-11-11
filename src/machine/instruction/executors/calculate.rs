@@ -12,7 +12,9 @@ use super::super::CalculationMethod;
 pub struct CalculateExecutor;
 
 impl Executor for CalculateExecutor {
-    fn execute(&self, machine: &mut Strontium, instruction: Instruction) -> Result<bool, StrontiumError> {
+    fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError> {
+        let instruction = machine.parse_instruction()?;
+
         if let Instruction::CALCULATE { method, operand1, operand2, destination } = instruction {
             let op1 = machine.registers.get(&operand1);
             let op2 = machine.registers.get(&operand2);

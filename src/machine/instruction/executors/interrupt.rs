@@ -7,7 +7,9 @@ use super::super::InterruptKind;
 pub struct InterruptExecutor;
 
 impl Executor for InterruptExecutor {
-    fn execute(&self, machine: &mut Strontium, instruction: Instruction) -> Result<bool, StrontiumError> {
+    fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError> {
+        let instruction = machine.parse_instruction()?;
+
         if let Instruction::INTERRUPT { address: _, interrupt } = instruction {
             match interrupt.kind {
                 InterruptKind::Print => {

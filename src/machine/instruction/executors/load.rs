@@ -14,7 +14,9 @@ use crate::Instruction;
 pub struct LoadExecutor;
 
 impl Executor for LoadExecutor {
-    fn execute(&self, machine: &mut Strontium, instruction: Instruction) -> Result<bool, StrontiumError> {
+    fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError> {
+        let instruction = machine.parse_instruction()?;
+
         if let Instruction::LOAD { value, register } = instruction {
             machine.registers.set(&register, value);
         }

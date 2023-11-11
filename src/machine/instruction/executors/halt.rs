@@ -9,7 +9,7 @@ use crate::Instruction;
 pub struct HaltExecutor;
 
 impl Executor for HaltExecutor {
-    fn execute(&self, _machine: &mut Strontium, _instruction: Instruction) -> Result<bool, StrontiumError> {
+    fn execute(&self, _machine: &mut Strontium) -> Result<bool, StrontiumError> {
         Ok(false)
     }
 }
