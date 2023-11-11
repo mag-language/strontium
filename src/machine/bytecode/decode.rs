@@ -8,24 +8,22 @@ use super::{
 
 use std::convert::{TryFrom, TryInto};
 
-#[derive(Debug, Clone)]
 pub struct BytecodeParser {
-    bytes: Vec<u8>,
+    /// A reference to the contents of the `bc` register, which contains program bytecode.
+    pub bytecode: Vec<u8>,
+    /// The current position in the bytecode register.
     index: usize,
+    /// Used to accumulate errors while parsing.
     errors: Vec<BytecodeError>,
 }
 
-impl<'a> BytecodeParser {
-    pub fn new() -> Self {
+impl BytecodeParser {
+    pub fn new(bytecode: Vec<u8>) -> Self {
         BytecodeParser {
-            bytes: vec![],
+            bytecode,
             index: 0,
             errors: vec![],
         }
-    }
-
-    pub fn add_bytecode(&mut self, bytecode: &mut Vec<u8>) {
-        self.bytes.append(bytecode);
     }
 
     /// Advance the parser by one byte if possible.
@@ -40,26 +38,23 @@ impl<'a> BytecodeParser {
     }
 
     fn peek(&self) -> u8 {
-        self.bytes[self.index]
+        self.bytecode[self.index]
     }
 
     /// Check if the parser has reached the end of the bytecode.
     fn eof(&self) -> bool {
-        println!("Calling byte parser eof()? index: {}, len: {}", self.index, self.bytes.len());
-        self.index >= self.bytes.len()
+        self.index >= self.bytecode.len()
     }
-
 
     /// Consume a number of bytes starting from the current position.
     fn consume_n_bytes(&mut self, n: usize) -> Result<Vec<u8>, BytecodeError> {
-        if self.index + n > self.bytes.len() {
-            println!("CONSUME_N_BYTES");
-            Err(BytecodeError::UnexpectedEof((self.index + n) as u32))
+        if self.index + n > self.bytecode.len() {
+            Err(BytecodeError::UnexpectedEof(self.index as u32))
         } else {
             let start = self.index;
             let end = start + n;
             self.index = end;
-            Ok(self.bytes[start .. end].to_vec())
+            Ok(self.bytecode[start .. end].to_vec())
         }
     }
 
@@ -90,14 +85,13 @@ impl<'a> BytecodeParser {
     fn expect_bytes(&mut self, expected: Vec<u8>) -> Result<(), BytecodeError> {
         let end_index = self.index + expected.len();
 
-        if end_index > self.bytes.len() {
-            println!("EXPECT BYTES");
+        if end_index > self.bytecode.len() {
             return Err(BytecodeError::UnexpectedEof(self.index as u32));
         }
 
-        let actual = &self.bytes[self.index .. end_index];
+        let actual = &self.bytecode[self.index .. end_index];
 
-        if actual == expected.as_slice() {
+        if actual.to_vec() == expected.as_slice() {
             self.index = end_index;
             Ok(())
         } else {
@@ -108,16 +102,31 @@ impl<'a> BytecodeParser {
         }
     }
 
+    pub fn value_to_byte(&self, value: RegisterValue) -> u8 {
+        if let RegisterValue::UInt8(byte) = value {
+            byte
+        } else {
+            unreachable!()
+        }
+    }
+
+    pub fn values_to_bytes(&self, values: Vec<RegisterValue>) -> Vec<u8> {
+        values.iter().filter_map(|val| {
+            if let RegisterValue::UInt8(byte) = val {
+                Some(*byte)
+            } else {
+                None // Or handle differently, maybe even panic if you expect only UInt8 values.
+            }
+        }).collect()
+    }
+
     pub fn parse_instruction(&mut self) -> Result<Instruction, BytecodeError> {
         if self.eof() {
-            println!("PARSE INSTRUCTION");
             return Err(BytecodeError::UnexpectedEof(self.index as u32));
-        }
+        };
 
-        let opcode = Opcode::from(self.bytes[self.index]);
+        let opcode = Opcode::from(self.bytecode[self.index].clone());
         self.advance()?;
-
-        println!("Opcode: {:?}", opcode);
 
         let instruction = match opcode {
             Opcode::HALT =>  {
