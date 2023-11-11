@@ -10,13 +10,8 @@ mod executors;
 pub use self::executors::*;
 
 pub trait Executor {
-    fn execute(
-		&self,
-		machine: &mut Strontium,
-		instruction: Instruction,
-	) -> Result<bool, StrontiumError>;
+    fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError>;
 }
-
 
 /// A signal indicating that an event needs immediate attention. This enumeration
 /// contains the interrupt types supported by the virtual machine.
@@ -160,18 +155,6 @@ impl Instruction {
 	}
 }
 
-impl TryFrom<Vec<u8>> for Instruction {
-	type Error = BytecodeError;
-	// Implement basic method structure
-	fn try_from(bytes: Vec<u8>) -> Result<Instruction, BytecodeError> {
-		let opcode: Opcode = bytes[0].into();
-
-		match opcode {
-			Opcode::HALT => Ok(Instruction::HALT),
-			_ => Err(BytecodeError::InvalidOpcode(bytes[0])),
-		}
-	}
-}
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BytecodeError {
 	UnexpectedEof,
