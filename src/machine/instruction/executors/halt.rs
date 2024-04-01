@@ -10,6 +10,7 @@ pub struct HaltExecutor;
 
 impl Executor for HaltExecutor {
     fn execute(&self, _machine: &mut Strontium) -> Result<bool, StrontiumError> {
+        println!("HALT instruction");
         Ok(false)
     }
 }

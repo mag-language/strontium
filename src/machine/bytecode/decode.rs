@@ -12,7 +12,7 @@ pub struct BytecodeParser {
     /// A reference to the contents of the `bc` register, which contains program bytecode.
     pub bytecode: Vec<u8>,
     /// The current position in the bytecode register.
-    index: usize,
+    pub index: usize,
     /// Used to accumulate errors while parsing.
     errors: Vec<BytecodeError>,
 }
@@ -24,6 +24,12 @@ impl BytecodeParser {
             index: 0,
             errors: vec![],
         }
+    }
+
+    pub fn set_bytecode(&mut self, bytecode: Vec<u8>) {
+        self.bytecode = bytecode;
+        self.index = 0;
+        self.errors = vec![];
     }
 
     /// Advance the parser by one byte if possible.
@@ -53,6 +59,7 @@ impl BytecodeParser {
             let start = self.index;
             let end = start + n;
             self.index = end;
+            println!("End: {}", end);
             Ok(self.bytecode[start .. end].to_vec())
         }
     }
@@ -129,11 +136,13 @@ impl BytecodeParser {
 
         let instruction = match opcode {
             Opcode::HALT =>  {
+                println!(":: HALT");
                 self.expect_bytes(vec![0, 0, 0, 0, 0, 0, 0])?;
                 Instruction::HALT
             },
 
             Opcode::LOAD => {
+                println!(":: LOAD");
                 let register = self.consume_string()?;
                 println!("Decoded register {}, index {}", register, self.index);
                 let value_len = self.consume_byte();
@@ -152,6 +161,7 @@ impl BytecodeParser {
             },
 
             Opcode::MOVE | Opcode::COPY => {
+                println!(":: MOVE/COPY");
                 let source_len = self.peek();
                 self.advance()?;
                 let source = self.consume_n_bytes(source_len as usize)?;
@@ -174,6 +184,7 @@ impl BytecodeParser {
             },
 
             Opcode::PUSH => {
+                println!(":: PUSH");
                 let destination_len = self.peek();
                 self.advance()?;
                 let destination = self.consume_n_bytes(destination_len as usize)?;
@@ -189,6 +200,7 @@ impl BytecodeParser {
             },
 
             Opcode::APPEND => {
+                println!(":: APPEND");
                 let destination_len = self.peek();
                 self.advance()?;
                 let destination = self.consume_n_bytes(destination_len as usize)?;
@@ -210,6 +222,7 @@ impl BytecodeParser {
             },
 
             Opcode::CALCULATE => {
+                println!(":: CALCULATE");
                 let method = self.peek();
                 self.advance()?;
 
@@ -234,6 +247,7 @@ impl BytecodeParser {
             },
 
             Opcode::COMPARE => {
+                println!(":: COMPARE");
                 let method = self.peek();
                 self.advance()?;
 
@@ -258,6 +272,7 @@ impl BytecodeParser {
             },
 
             Opcode::BITWISE => {
+                println!(":: BITWISE");
                 let method_byte = self.consume_byte();
 
                 let method = match method_byte {
@@ -314,6 +329,7 @@ impl BytecodeParser {
             },
 
             Opcode::JUMP => {
+                println!(":: JUMP");
                 let destination = self.consume_u32()?;
             
                 Instruction::JUMP {
@@ -322,6 +338,7 @@ impl BytecodeParser {
             },
             
             Opcode::JUMPC => {
+                println!(":: JUMPC");
                 let destination = self.consume_u32()?;
                 let conditional_address = self.consume_string()?;
             

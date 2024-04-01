@@ -89,6 +89,7 @@ impl Strontium {
     }
 
 	pub fn push_instruction(&mut self, instruction: Instruction) {
+		//println!("pushing instruction: {:?}", instruction);
 		let mut bytecode = self.bc().to_vec();
 		let decoded: Vec<u8> = instruction.into();
 
@@ -98,7 +99,11 @@ impl Strontium {
 				.map(|b| RegisterValue::UInt8(*b))
 				.collect::<Vec<RegisterValue>>()
 		);
-		self.registers.set("bc", RegisterValue::Array(bytecode));
+		self.registers.set("bc", RegisterValue::Array(bytecode.clone()));
+		self.bytecode_parser.set_bytecode(bytecode.iter().map(|reg_value| { match reg_value {
+			RegisterValue::UInt8(b) => *b,
+			_ => unreachable!(),
+		}}).collect());
 	}
 
 	pub fn parse_instruction(&mut self) -> Result<Instruction, StrontiumError> {
@@ -110,12 +115,24 @@ impl Strontium {
 		let opcode: Opcode = self.consume_u8()?.into();
 		let executor = self.executors.get(&opcode).cloned();
 
+		println!("Launching instruction executor: {:?}", Opcode::from(opcode.clone()));
+
 		self.should_continue = match executor {
 			Some(executor) => executor.execute(self)?,
 			None => return Err(StrontiumError::IllegalOpcode(opcode as u8)),
 		};
 
 		Ok(self.should_continue)
+	}
+
+	pub fn execute_until_eof(&mut self) -> Result<bool, StrontiumError> {
+		self.should_continue = true;
+
+		while self.should_continue && !self.eof() {
+			self.execute()?;
+		}
+
+		Ok(true)
 	}
 
 	/// Execute instructions until a `HALT` instruction is encountered.
@@ -132,10 +149,7 @@ impl Strontium {
 */
 
 	fn ip(&self) -> usize {
-		match self.registers.get("ip").unwrap() {
-			RegisterValue::UInt64(ip) => *ip as usize,
-			_ => unreachable!(),
-		}
+		self.bytecode_parser.index
 	}
 
 	fn bc(&self) -> Vec<RegisterValue> {
@@ -159,10 +173,13 @@ impl Strontium {
 		let ip = self.ip();
 		let bytecode = self.bc();
 
+		println!("IP: {}", ip);
+
 		if ip + size > bytecode.len() {
 			Err(StrontiumError::UnexpectedEof)
 		} else {
 			let bytes = bytecode[ip .. ip + size].to_vec();
+			println!("Advancing by: {}", size);
 			self.advance_by(size)?;
 
 			Ok(bytes.iter().map(|b| match b {

@@ -15,6 +15,7 @@ pub struct LoadExecutor;
 
 impl Executor for LoadExecutor {
     fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError> {
+        println!("LOAD instruction");
         let instruction = machine.parse_instruction()?;
 
         if let Instruction::LOAD { value, register } = instruction {

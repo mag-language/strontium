@@ -8,11 +8,15 @@ pub struct InterruptExecutor;
 
 impl Executor for InterruptExecutor {
     fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError> {
+        println!("INTERRUPT");
+        println!("INTERRUPT :: Parsing expression");
         let instruction = machine.parse_instruction()?;
 
+        println!("INTERRUPT :: Parsed expression");
         if let Instruction::INTERRUPT { address: _, interrupt } = instruction {
             match interrupt.kind {
                 InterruptKind::Print => {
+                    println!("INTERRUPT :: Got InterruptKind::Print");
                     let value = machine.registers.get(&interrupt.address);
                     if let Some(value) = value {
                         println!("{}", value);

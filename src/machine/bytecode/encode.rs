@@ -77,8 +77,8 @@ impl Into<Vec<u8>> for Instruction {
                 b.append(&mut register.as_bytes().to_vec());
 
                 let value_bytes: Vec<u8> = value.into();
-                println!("Value bytes: {:?}", value_bytes);
-                println!("Value bytes len: {:?}", value_bytes.len());
+                //println!("Value bytes: {:?}", value_bytes);
+                //println!("Value bytes len: {:?}", value_bytes.len());
                 b.push(value_bytes.len() as u8);
                 b.append(&mut value_bytes[0 .. value_bytes.len()].to_vec());
 
