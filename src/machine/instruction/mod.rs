@@ -129,9 +129,25 @@ pub enum Instruction {
 		address: String,
 		interrupt: Interrupt,
 	},
+/*
+	/// Define a function and add it to the dispatch table.
+	DEF {
+		/// The name of the multimethod implementation.
+		name: String,
+		/// A pair, tuple, record or value type descriptor as a single argument.
+		arg_type: String,
+		/// The return type of the function.
+		return_type: String,
+		/// The position in the bytecode buffer where the function starts.
+		bytecode_start: usize,
+	},
+*/
+	CALL {
+		/// The address to jump to (the start of the method body).
+		address: usize,
+	},
 
-	CALL {},
-	RETURN {},
+	RETURN,
 }
 
 impl Instruction {
