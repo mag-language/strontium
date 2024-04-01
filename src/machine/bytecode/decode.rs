@@ -221,6 +221,17 @@ impl BytecodeParser {
                 }
             },
 
+            Opcode::INTERRUPT => {
+                println!(":: INTERRUPT");
+                let interrupt = self.consume_byte();
+                let register = self.consume_string();
+
+                Instruction::INTERRUPT {
+                    interrupt,
+                    register,
+                }
+            },
+
             Opcode::CALCULATE => {
                 println!(":: CALCULATE");
                 let method = self.peek();
