@@ -16,7 +16,7 @@ pub struct Registers {
     pub registers: BTreeMap<String, RegisterValue>,
 }
 
-impl Registers {
+impl<'a> Registers {
     pub fn new() -> Self {
         let mut registers = BTreeMap::new();
 
@@ -24,6 +24,10 @@ impl Registers {
         registers.insert("ip".to_string(), UInt64(0));
         // Create array containing program bytecode.
         registers.insert("bc".to_string(), Array(Vec::new()));
+
+        registers.insert("arg".to_string(), Empty);
+        // Create return value register.
+        registers.insert("ret".to_string(), Empty);
 
         registers.insert("r1".to_string(), Empty);
         registers.insert("r2".to_string(), Empty);
@@ -45,6 +49,16 @@ impl Registers {
 
     pub fn get(&self, name: &str) -> Option<&RegisterValue> {
         self.registers.get(name)
+    }
+
+    // Method to get a reference to the bytecode array.
+    // Note: This can only return a &[RegisterValue] to avoid temporary Vec<u8>
+    pub fn get_bytecode_ref(&'a self) -> &'a [RegisterValue] {
+        if let Some(RegisterValue::Array(bytecode)) = self.get("bc") {
+            &bytecode as &'a [RegisterValue]
+        } else {
+            panic!("Bytecode register is not an array");
+        }
     }
 
     pub fn allocate_register(&mut self) -> String {
