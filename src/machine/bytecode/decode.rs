@@ -32,7 +32,6 @@ impl BytecodeParser {
             self.index += 1;
             Ok(())
         } else {
-            println!("ADVANCE");
             Err(BytecodeError::UnexpectedEof(self.index as u32))
         }
     }
