@@ -1,5 +1,4 @@
-//! This module contains the virtual machine which executes Strontium bytecode. The VM uses a set of typed 
-//! registers to do number arithmetic, a memory vector provides the storage space for anything else.
+//! A virtual machine which executes Strontium instructions.
 
 pub mod bytecode;
 pub mod instruction;
@@ -10,41 +9,40 @@ use self::opcode::Opcode;
 use self::register::{RegisterValue, Registers};
 use self::instruction::*;
 
-use crate::types::StrontiumError;
+use crate::types::{StrontiumError, ValueType};
+use self::bytecode::decode::BytecodeParser;
 
 use std::convert::TryInto;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
+use std::hash::Hash;
 use std::rc::Rc;
-// use byteorder::{LittleEndian, ReadBytesExt};
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Value {
-	Bytes(Vec<u8>),
-	Int(i64),
-	UInt(u64),
-	Float(f64),
-	String(String),
+pub struct DispatchMethod {
+    pub method_name: String,
+    pub argument_types: Vec<ValueType>,
+    pub return_type: ValueType,
+    pub bytecode_start: usize,
 }
 
+// Define the dispatch table
+type DispatchKey = (String, Vec<ValueType>);
+type DispatchTable = BTreeMap<DispatchKey, DispatchMethod>;
 
 pub struct StackFrame {
-    /// The instruction pointer to return to after the function returns
     pub return_address: usize,
-    /// The index of the first argument in the `registers` array
-    pub arg_start: usize,
-    /// The number of arguments passed to the function
-    pub arg_count: usize,
+    pub local_variables: HashMap<String, RegisterValue>,
 }
 
 pub struct Strontium {
 	/// Holds general-purpose registers for storing different types of values
-	pub registers: Registers,
+	pub registers: 	 Registers,
+	executors: 		 HashMap<Opcode, Rc<dyn Executor>>,
 	/// Points to the next index in the buffer of the bytecode register.
-	pub ip:        usize,
-	/// Contains references for function arguments and return values
-	pub call_stack: Vec<u8>,
+	pub ip:        	 usize,
+	bytecode_parser: BytecodeParser,
 	should_continue: bool,
-	executors: HashMap<Opcode, Rc<dyn Executor>>,
+	dispatch_table:  DispatchTable,
+	call_stack: 	 Vec<StackFrame>,
 }
 
 impl Strontium {
@@ -55,40 +53,66 @@ impl Strontium {
         executors.insert(Opcode::HALT, Rc::new(HaltExecutor));
         executors.insert(Opcode::LOAD, Rc::new(LoadExecutor));
         executors.insert(Opcode::CALCULATE, Rc::new(CalculateExecutor));
+        executors.insert(Opcode::CALL, Rc::new(CallExecutor));
         executors.insert(Opcode::INTERRUPT, Rc::new(InterruptExecutor));
+        executors.insert(Opcode::RETURN, Rc::new(ReturnExecutor));
+
+		let registers = Registers::new();
 
 		Self {
-			registers:  Registers::new(),
-			ip:      	0,
-			call_stack: vec![],
-			should_continue: true,
+			registers,
 			executors,
+			ip:      		 0,
+			bytecode_parser: BytecodeParser::new(vec![]),
+			should_continue: true,
+			dispatch_table:  BTreeMap::new(),
+			call_stack: 	 vec![],
 		}
 	}
 
-	/// Append machine code to the array in the bytecode register.
-    pub fn push_bytecode(&mut self, bytes: Vec<u8>) {
-		let mut bytecode = self.bc();
-        bytecode.extend(bytes);
-        self.registers.set("bc", RegisterValue::Array(
-			bytecode
-				.iter()
-				.map(|v| RegisterValue::UInt8(*v))
-				.collect()
-		));
+	// Method to add a method to the dispatch table
+    pub fn add_method(&mut self, method: DispatchMethod) {
+        let key = (method.method_name.clone(), method.argument_types.clone());
+        self.dispatch_table.insert(key, method);
     }
 
+    // Method to resolve a method call
+    pub fn resolve_method(&self, name: &str, argument_types: Vec<ValueType>) -> Option<&DispatchMethod> {
+        self.dispatch_table.get(&(name.to_string(), argument_types))
+    }
+
+	/// Append machine code to the array in the bytecode register.
+    pub fn push_bytecode(&mut self, bytes: Vec<u8>) {
+		let mut bytecode = self.bc().to_vec();
+        bytecode.extend(bytes.iter().map(|b| RegisterValue::UInt8(*b)).collect::<Vec<RegisterValue>>());
+        self.registers.set("bc", RegisterValue::Array(bytecode));
+    }
+
+	pub fn push_instruction(&mut self, instruction: Instruction) {
+		let mut bytecode = self.bc().to_vec();
+		let decoded: Vec<u8> = instruction.into();
+
+		bytecode.append(&mut
+			decoded
+				.iter()
+				.map(|b| RegisterValue::UInt8(*b))
+				.collect::<Vec<RegisterValue>>()
+		);
+		self.registers.set("bc", RegisterValue::Array(bytecode));
+	}
+
+	pub fn parse_instruction(&mut self) -> Result<Instruction, StrontiumError> {
+		Ok(self.bytecode_parser.parse_instruction()?)
+	}
+
 	/// Execute a single instruction.
-    pub fn execute(&mut self, instruction: Instruction) -> Result<bool, StrontiumError> {
-		let opcode: Opcode = instruction.get_opcode();
+    pub fn execute(&mut self) -> Result<bool, StrontiumError> {
+		let opcode: Opcode = self.consume_u8()?.into();
 		let executor = self.executors.get(&opcode).cloned();
 
 		self.should_continue = match executor {
-			Some(executor) => executor.execute(
-				self,
-				instruction,
-			)?,
-			None => return Err(StrontiumError::IllegalOpcode(self.peek())),
+			Some(executor) => executor.execute(self)?,
+			None => return Err(StrontiumError::IllegalOpcode(opcode as u8)),
 		};
 
 		Ok(self.should_continue)
@@ -114,16 +138,13 @@ impl Strontium {
 		}
 	}
 
-	fn bc(&self) -> Vec<u8> {
+	fn bc(&self) -> Vec<RegisterValue> {
 		let bc = match self.registers.get("bc").unwrap() {
 			RegisterValue::Array(bytes) => bytes.clone(),
 			_ => unreachable!(),
 		};
 
-		bc.iter().map(|v| match v {
-            RegisterValue::UInt8(b) => *b,
-            _ => unreachable!(),
-        }).collect()
+		bc
 	}
 
 	fn _set_register(&mut self, name: &str, value: RegisterValue) {
@@ -143,7 +164,11 @@ impl Strontium {
 		} else {
 			let bytes = bytecode[ip .. ip + size].to_vec();
 			self.advance_by(size)?;
-			Ok(bytes)
+
+			Ok(bytes.iter().map(|b| match b {
+				RegisterValue::UInt8(b) => *b,
+				_ => unreachable!(),
+			}).collect::<Vec<u8>>())
 		}
 	}
 
@@ -230,7 +255,7 @@ impl Strontium {
 
 	fn peek(&self) -> u8 {
 		let bytecode = self.bc();
-		bytecode[self.ip()]
+		self.bytecode_parser.bytecode[self.ip()]
 	}
 
 	fn advance_by(&mut self, n: usize) -> Result<(), StrontiumError> {
@@ -248,7 +273,7 @@ impl Strontium {
 	}
 
 	/// Returns true when the instruction pointer is at the end of the memory array.
-	fn _eof(&mut self) -> bool {
+	fn eof(&mut self) -> bool {
 		let ip = self.ip().clone();
 		ip > self.bc().len()
 	}
