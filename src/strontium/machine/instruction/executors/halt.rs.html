@@ -15,6 +15,7 @@
 <a href="#13" id="13">13</a>
 <a href="#14" id="14">14</a>
 <a href="#15" id="15">15</a>
+<a href="#16" id="16">16</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::machine::{Executor, Strontium, StrontiumError};
 <span class="kw">use </span><span class="kw">crate</span>::Instruction;
 
@@ -27,6 +28,7 @@
 
 <span class="kw">impl </span>Executor <span class="kw">for </span>HaltExecutor {
     <span class="kw">fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, _machine: <span class="kw-2">&amp;mut </span>Strontium) -&gt; <span class="prelude-ty">Result</span>&lt;bool, StrontiumError&gt; {
+        <span class="macro">println!</span>(<span class="string">"HALT instruction"</span>);
         <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
     }
 }</code></pre></div></section></main></body></html>

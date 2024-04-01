@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["StrontiumError"],"mod":["program","value"]};
+window.SIDEBAR_ITEMS = {"mod":["error","program","value"]};

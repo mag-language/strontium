@@ -29,6 +29,7 @@
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::machine::{
     Executor,
     Strontium,
@@ -44,6 +45,7 @@
 
 <span class="kw">impl </span>Executor <span class="kw">for </span>CallExecutor {
     <span class="kw">fn </span>execute(<span class="kw-2">&amp;</span><span class="self">self</span>, machine: <span class="kw-2">&amp;mut </span>Strontium) -&gt; <span class="prelude-ty">Result</span>&lt;bool, StrontiumError&gt; {
+        <span class="macro">println!</span>(<span class="string">"CALL instruction"</span>);
         <span class="kw">let </span>instruction = machine.parse_instruction()<span class="question-mark">?</span>;
 
         <span class="kw">if let </span>Instruction::CALL { address } = instruction {

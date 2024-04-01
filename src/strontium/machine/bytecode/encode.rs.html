@@ -329,9 +329,9 @@
                 b.append(<span class="kw-2">&amp;mut </span>register.as_bytes().to_vec());
 
                 <span class="kw">let </span>value_bytes: Vec&lt;u8&gt; = value.into();
-                <span class="macro">println!</span>(<span class="string">"Value bytes: {:?}"</span>, value_bytes);
-                <span class="macro">println!</span>(<span class="string">"Value bytes len: {:?}"</span>, value_bytes.len());
-                b.push(value_bytes.len() <span class="kw">as </span>u8);
+                <span class="comment">//println!("Value bytes: {:?}", value_bytes);
+                //println!("Value bytes len: {:?}", value_bytes.len());
+                </span>b.push(value_bytes.len() <span class="kw">as </span>u8);
                 b.append(<span class="kw-2">&amp;mut </span>value_bytes[<span class="number">0 </span>.. value_bytes.len()].to_vec());
 
                 b

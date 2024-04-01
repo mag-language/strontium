@@ -339,6 +339,23 @@
 <a href="#337" id="337">337</a>
 <a href="#338" id="338">338</a>
 <a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
+<a href="#353" id="353">353</a>
+<a href="#354" id="354">354</a>
+<a href="#355" id="355">355</a>
+<a href="#356" id="356">356</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{
     BytecodeError,
     Instruction,
@@ -353,7 +370,7 @@
     <span class="doccomment">/// A reference to the contents of the `bc` register, which contains program bytecode.
     </span><span class="kw">pub </span>bytecode: Vec&lt;u8&gt;,
     <span class="doccomment">/// The current position in the bytecode register.
-    </span>index: usize,
+    </span><span class="kw">pub </span>index: usize,
     <span class="doccomment">/// Used to accumulate errors while parsing.
     </span>errors: Vec&lt;BytecodeError&gt;,
 }
@@ -365,6 +382,12 @@
             index: <span class="number">0</span>,
             errors: <span class="macro">vec!</span>[],
         }
+    }
+
+    <span class="kw">pub fn </span>set_bytecode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bytecode: Vec&lt;u8&gt;) {
+        <span class="self">self</span>.bytecode = bytecode;
+        <span class="self">self</span>.index = <span class="number">0</span>;
+        <span class="self">self</span>.errors = <span class="macro">vec!</span>[];
     }
 
     <span class="doccomment">/// Advance the parser by one byte if possible.
@@ -394,6 +417,7 @@
             <span class="kw">let </span>start = <span class="self">self</span>.index;
             <span class="kw">let </span>end = start + n;
             <span class="self">self</span>.index = end;
+            <span class="macro">println!</span>(<span class="string">"End: {}"</span>, end);
             <span class="prelude-val">Ok</span>(<span class="self">self</span>.bytecode[start .. end].to_vec())
         }
     }
@@ -470,11 +494,13 @@
 
         <span class="kw">let </span>instruction = <span class="kw">match </span>opcode {
             Opcode::HALT =&gt;  {
+                <span class="macro">println!</span>(<span class="string">":: HALT"</span>);
                 <span class="self">self</span>.expect_bytes(<span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>])<span class="question-mark">?</span>;
                 Instruction::HALT
             },
 
             Opcode::LOAD =&gt; {
+                <span class="macro">println!</span>(<span class="string">":: LOAD"</span>);
                 <span class="kw">let </span>register = <span class="self">self</span>.consume_string()<span class="question-mark">?</span>;
                 <span class="macro">println!</span>(<span class="string">"Decoded register {}, index {}"</span>, register, <span class="self">self</span>.index);
                 <span class="kw">let </span>value_len = <span class="self">self</span>.consume_byte();
@@ -493,6 +519,7 @@
             },
 
             Opcode::MOVE | Opcode::COPY =&gt; {
+                <span class="macro">println!</span>(<span class="string">":: MOVE/COPY"</span>);
                 <span class="kw">let </span>source_len = <span class="self">self</span>.peek();
                 <span class="self">self</span>.advance()<span class="question-mark">?</span>;
                 <span class="kw">let </span>source = <span class="self">self</span>.consume_n_bytes(source_len <span class="kw">as </span>usize)<span class="question-mark">?</span>;
@@ -515,6 +542,7 @@
             },
 
             Opcode::PUSH =&gt; {
+                <span class="macro">println!</span>(<span class="string">":: PUSH"</span>);
                 <span class="kw">let </span>destination_len = <span class="self">self</span>.peek();
                 <span class="self">self</span>.advance()<span class="question-mark">?</span>;
                 <span class="kw">let </span>destination = <span class="self">self</span>.consume_n_bytes(destination_len <span class="kw">as </span>usize)<span class="question-mark">?</span>;
@@ -530,6 +558,7 @@
             },
 
             Opcode::APPEND =&gt; {
+                <span class="macro">println!</span>(<span class="string">":: APPEND"</span>);
                 <span class="kw">let </span>destination_len = <span class="self">self</span>.peek();
                 <span class="self">self</span>.advance()<span class="question-mark">?</span>;
                 <span class="kw">let </span>destination = <span class="self">self</span>.consume_n_bytes(destination_len <span class="kw">as </span>usize)<span class="question-mark">?</span>;
@@ -551,6 +580,7 @@
             },
 
             Opcode::CALCULATE =&gt; {
+                <span class="macro">println!</span>(<span class="string">":: CALCULATE"</span>);
                 <span class="kw">let </span>method = <span class="self">self</span>.peek();
                 <span class="self">self</span>.advance()<span class="question-mark">?</span>;
 
@@ -575,6 +605,7 @@
             },
 
             Opcode::COMPARE =&gt; {
+                <span class="macro">println!</span>(<span class="string">":: COMPARE"</span>);
                 <span class="kw">let </span>method = <span class="self">self</span>.peek();
                 <span class="self">self</span>.advance()<span class="question-mark">?</span>;
 
@@ -599,6 +630,7 @@
             },
 
             Opcode::BITWISE =&gt; {
+                <span class="macro">println!</span>(<span class="string">":: BITWISE"</span>);
                 <span class="kw">let </span>method_byte = <span class="self">self</span>.consume_byte();
 
                 <span class="kw">let </span>method = <span class="kw">match </span>method_byte {
@@ -655,6 +687,7 @@
             },
 
             Opcode::JUMP =&gt; {
+                <span class="macro">println!</span>(<span class="string">":: JUMP"</span>);
                 <span class="kw">let </span>destination = <span class="self">self</span>.consume_u32()<span class="question-mark">?</span>;
             
                 Instruction::JUMP {
@@ -663,6 +696,7 @@
             },
             
             Opcode::JUMPC =&gt; {
+                <span class="macro">println!</span>(<span class="string">":: JUMPC"</span>);
                 <span class="kw">let </span>destination = <span class="self">self</span>.consume_u32()<span class="question-mark">?</span>;
                 <span class="kw">let </span>conditional_address = <span class="self">self</span>.consume_string()<span class="question-mark">?</span>;
             

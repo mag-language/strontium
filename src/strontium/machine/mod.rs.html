@@ -285,6 +285,23 @@
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A virtual machine which executes Strontium instructions.
 
 </span><span class="kw">pub mod </span>bytecode;
@@ -376,7 +393,8 @@
     }
 
 	<span class="kw">pub fn </span>push_instruction(<span class="kw-2">&amp;mut </span><span class="self">self</span>, instruction: Instruction) {
-		<span class="kw">let </span><span class="kw-2">mut </span>bytecode = <span class="self">self</span>.bc().to_vec();
+		<span class="comment">//println!("pushing instruction: {:?}", instruction);
+		</span><span class="kw">let </span><span class="kw-2">mut </span>bytecode = <span class="self">self</span>.bc().to_vec();
 		<span class="kw">let </span>decoded: Vec&lt;u8&gt; = instruction.into();
 
 		bytecode.append(<span class="kw-2">&amp;mut
@@ -385,7 +403,11 @@
 				.map(|b| RegisterValue::UInt8(<span class="kw-2">*</span>b))
 				.collect::&lt;Vec&lt;RegisterValue&gt;&gt;()
 		);
-		<span class="self">self</span>.registers.set(<span class="string">"bc"</span>, RegisterValue::Array(bytecode));
+		<span class="self">self</span>.registers.set(<span class="string">"bc"</span>, RegisterValue::Array(bytecode.clone()));
+		<span class="self">self</span>.bytecode_parser.set_bytecode(bytecode.iter().map(|reg_value| { <span class="kw">match </span>reg_value {
+			RegisterValue::UInt8(b) =&gt; <span class="kw-2">*</span>b,
+			<span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+		}}).collect());
 	}
 
 	<span class="kw">pub fn </span>parse_instruction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Instruction, StrontiumError&gt; {
@@ -397,12 +419,24 @@
 		<span class="kw">let </span>opcode: Opcode = <span class="self">self</span>.consume_u8()<span class="question-mark">?</span>.into();
 		<span class="kw">let </span>executor = <span class="self">self</span>.executors.get(<span class="kw-2">&amp;</span>opcode).cloned();
 
+		<span class="macro">println!</span>(<span class="string">"Launching instruction executor: {:?}"</span>, Opcode::from(opcode.clone()));
+
 		<span class="self">self</span>.should_continue = <span class="kw">match </span>executor {
 			<span class="prelude-val">Some</span>(executor) =&gt; executor.execute(<span class="self">self</span>)<span class="question-mark">?</span>,
 			<span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(StrontiumError::IllegalOpcode(opcode <span class="kw">as </span>u8)),
 		};
 
 		<span class="prelude-val">Ok</span>(<span class="self">self</span>.should_continue)
+	}
+
+	<span class="kw">pub fn </span>execute_until_eof(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;bool, StrontiumError&gt; {
+		<span class="self">self</span>.should_continue = <span class="bool-val">true</span>;
+
+		<span class="kw">while </span><span class="self">self</span>.should_continue &amp;&amp; !<span class="self">self</span>.eof() {
+			<span class="self">self</span>.execute()<span class="question-mark">?</span>;
+		}
+
+		<span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
 	}
 
 	<span class="doccomment">/// Execute instructions until a `HALT` instruction is encountered.
@@ -419,10 +453,7 @@
 */
 
 	</span><span class="kw">fn </span>ip(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-		<span class="kw">match </span><span class="self">self</span>.registers.get(<span class="string">"ip"</span>).unwrap() {
-			RegisterValue::UInt64(ip) =&gt; <span class="kw-2">*</span>ip <span class="kw">as </span>usize,
-			<span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-		}
+		<span class="self">self</span>.bytecode_parser.index
 	}
 
 	<span class="kw">fn </span>bc(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;RegisterValue&gt; {
@@ -446,10 +477,13 @@
 		<span class="kw">let </span>ip = <span class="self">self</span>.ip();
 		<span class="kw">let </span>bytecode = <span class="self">self</span>.bc();
 
+		<span class="macro">println!</span>(<span class="string">"IP: {}"</span>, ip);
+
 		<span class="kw">if </span>ip + size &gt; bytecode.len() {
 			<span class="prelude-val">Err</span>(StrontiumError::UnexpectedEof)
 		} <span class="kw">else </span>{
 			<span class="kw">let </span>bytes = bytecode[ip .. ip + size].to_vec();
+			<span class="macro">println!</span>(<span class="string">"Advancing by: {}"</span>, size);
 			<span class="self">self</span>.advance_by(size)<span class="question-mark">?</span>;
 
 			<span class="prelude-val">Ok</span>(bytes.iter().map(|b| <span class="kw">match </span>b {
