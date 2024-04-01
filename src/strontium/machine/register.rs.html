@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/machine/register.rs`."><title>register.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-cb6f1f67f1bcd037.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="strontium" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0 (cc66ad468 2023-10-03)" data-channel="1.73.0" data-search-js="search-6dfdfced5eff6596.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-1596385f77d47ef2.css" data-theme-dark-css="dark-0a43001d3fc2282c.css" data-theme-ayu-css="ayu-fd19013d6ce078bf.css" ><script src="../../../static.files/storage-db41da1a38ea3cb8.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../static.files/light-1596385f77d47ef2.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../static.files/dark-0a43001d3fc2282c.css"><link rel="stylesheet" href="../../../static.files/noscript-cffde32267a19fd6.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../strontium/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/machine/register.rs`."><title>register.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="strontium" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0 (aedd173a2 2024-03-17)" data-channel="1.77.0" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../strontium/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -367,6 +369,20 @@
 <a href="#367" id="367">367</a>
 <a href="#368" id="368">368</a>
 <a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>num_derive::{FromPrimitive, ToPrimitive};
 <span class="kw">use </span>byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
@@ -385,23 +401,27 @@
     </span><span class="kw">pub </span>registers: BTreeMap&lt;String, RegisterValue&gt;,
 }
 
-<span class="kw">impl </span>Registers {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Registers {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>registers = BTreeMap::new();
 
         <span class="comment">// Create instruction pointer.
-        </span>registers.insert(<span class="string">&quot;ip&quot;</span>.to_string(), UInt64(<span class="number">0</span>));
+        </span>registers.insert(<span class="string">"ip"</span>.to_string(), UInt64(<span class="number">0</span>));
         <span class="comment">// Create array containing program bytecode.
-        </span>registers.insert(<span class="string">&quot;bc&quot;</span>.to_string(), Array(Vec::new()));
+        </span>registers.insert(<span class="string">"bc"</span>.to_string(), Array(Vec::new()));
 
-        registers.insert(<span class="string">&quot;r1&quot;</span>.to_string(), Empty);
-        registers.insert(<span class="string">&quot;r2&quot;</span>.to_string(), Empty);
-        registers.insert(<span class="string">&quot;r3&quot;</span>.to_string(), Empty);
-        registers.insert(<span class="string">&quot;r4&quot;</span>.to_string(), Empty);
-        registers.insert(<span class="string">&quot;r5&quot;</span>.to_string(), Empty);
-        registers.insert(<span class="string">&quot;r6&quot;</span>.to_string(), Empty);
-        registers.insert(<span class="string">&quot;r7&quot;</span>.to_string(), Empty);
-        registers.insert(<span class="string">&quot;r8&quot;</span>.to_string(), Empty);
+        registers.insert(<span class="string">"arg"</span>.to_string(), Empty);
+        <span class="comment">// Create return value register.
+        </span>registers.insert(<span class="string">"ret"</span>.to_string(), Empty);
+
+        registers.insert(<span class="string">"r1"</span>.to_string(), Empty);
+        registers.insert(<span class="string">"r2"</span>.to_string(), Empty);
+        registers.insert(<span class="string">"r3"</span>.to_string(), Empty);
+        registers.insert(<span class="string">"r4"</span>.to_string(), Empty);
+        registers.insert(<span class="string">"r5"</span>.to_string(), Empty);
+        registers.insert(<span class="string">"r6"</span>.to_string(), Empty);
+        registers.insert(<span class="string">"r7"</span>.to_string(), Empty);
+        registers.insert(<span class="string">"r8"</span>.to_string(), Empty);
 
         <span class="self">Self </span>{
             registers,
@@ -414,6 +434,16 @@
 
     <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>RegisterValue&gt; {
         <span class="self">self</span>.registers.get(name)
+    }
+
+    <span class="comment">// Method to get a reference to the bytecode array.
+    // Note: This can only return a &amp;[RegisterValue] to avoid temporary Vec&lt;u8&gt;
+    </span><span class="kw">pub fn </span>get_bytecode_ref(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[RegisterValue] {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(RegisterValue::Array(bytecode)) = <span class="self">self</span>.get(<span class="string">"bc"</span>) {
+            <span class="kw-2">&amp;</span>bytecode <span class="kw">as </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>[RegisterValue]
+        } <span class="kw">else </span>{
+            <span class="macro">panic!</span>(<span class="string">"Bytecode register is not an array"</span>);
+        }
     }
 
     <span class="kw">pub fn </span>allocate_register(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; String {
@@ -436,7 +466,7 @@
         }
 
         <span class="comment">// If no empty register is found, create a new one
-        </span><span class="kw">let </span>new_register_name = <span class="macro">format!</span>(<span class="string">&quot;r{}&quot;</span>, <span class="self">self</span>.registers.len() + <span class="number">1</span>);
+        </span><span class="kw">let </span>new_register_name = <span class="macro">format!</span>(<span class="string">"r{}"</span>, <span class="self">self</span>.registers.len() + <span class="number">1</span>);
         <span class="self">self</span>.registers.insert(new_register_name.clone(), UInt64(<span class="number">0</span>)); <span class="comment">// Mark as occupied
         </span>new_register_name
     }
@@ -561,10 +591,10 @@
                 </span>bytes.push(b <span class="kw">as </span>u8);
             },
             RegisterValue::Map(<span class="kw">_</span>) =&gt; {
-                <span class="macro">println!</span>(<span class="string">&quot;map register type is unimplemented&quot;</span>);
+                <span class="macro">println!</span>(<span class="string">"map register type is unimplemented"</span>);
             },
             RegisterValue::Array(<span class="kw">_</span>) =&gt; {
-                <span class="macro">println!</span>(<span class="string">&quot;array register type is unimplemented&quot;</span>);
+                <span class="macro">println!</span>(<span class="string">"array register type is unimplemented"</span>);
             },
         }
         bytes
@@ -630,7 +660,7 @@
             (<span class="self">Self</span>::UInt64(a), <span class="self">Self</span>::UInt64(b)) =&gt; <span class="self">Self</span>::UInt64(a.wrapping_add(b)),
             (<span class="self">Self</span>::Float32(a), <span class="self">Self</span>::Float32(b)) =&gt; <span class="self">Self</span>::Float32(a + b),
             (<span class="self">Self</span>::Float64(a), <span class="self">Self</span>::Float64(b)) =&gt; <span class="self">Self</span>::Float64(a + b),
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Incompatible types for addition&quot;</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Incompatible types for addition"</span>),
         }
     }
 }
@@ -650,7 +680,7 @@
             (<span class="self">Self</span>::UInt64(a), <span class="self">Self</span>::UInt64(b)) =&gt; <span class="self">Self</span>::UInt64(a.wrapping_sub(b)),
             (<span class="self">Self</span>::Float32(a), <span class="self">Self</span>::Float32(b)) =&gt; <span class="self">Self</span>::Float32(a - b),
             (<span class="self">Self</span>::Float64(a), <span class="self">Self</span>::Float64(b)) =&gt; <span class="self">Self</span>::Float64(a - b),
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Incompatible types for subtraction&quot;</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Incompatible types for subtraction"</span>),
         }
     }
 }
@@ -670,7 +700,7 @@
             (<span class="self">Self</span>::UInt64(a), <span class="self">Self</span>::UInt64(b)) =&gt; <span class="self">Self</span>::UInt64(a.wrapping_mul(b)),
             (<span class="self">Self</span>::Float32(a), <span class="self">Self</span>::Float32(b)) =&gt; <span class="self">Self</span>::Float32(a * b),
             (<span class="self">Self</span>::Float64(a), <span class="self">Self</span>::Float64(b)) =&gt; <span class="self">Self</span>::Float64(a * b),
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Incompatible types for multiplication&quot;</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Incompatible types for multiplication"</span>),
         }
     }
 }
@@ -690,29 +720,29 @@
             (<span class="self">Self</span>::UInt64(a), <span class="self">Self</span>::UInt64(b)) =&gt; <span class="self">Self</span>::UInt64(a.wrapping_div(b)),
             (<span class="self">Self</span>::Float32(a), <span class="self">Self</span>::Float32(b)) =&gt; <span class="self">Self</span>::Float32(a / b),
             (<span class="self">Self</span>::Float64(a), <span class="self">Self</span>::Float64(b)) =&gt; <span class="self">Self</span>::Float64(a / b),
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Incompatible types for division&quot;</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Incompatible types for division"</span>),
         }
     }
 }
 
 <span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>RegisterValue {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
-            RegisterValue::Empty =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;Empty&quot;</span>),
-            RegisterValue::Int8(i) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, i),
-            RegisterValue::Int16(i) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, i),
-            RegisterValue::Int32(i) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, i),
-            RegisterValue::Int64(i) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, i),
-            RegisterValue::UInt8(i) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, i),
-            RegisterValue::UInt16(i) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, i),
-            RegisterValue::UInt32(i) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, i),
-            RegisterValue::UInt64(i) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, i),
-            RegisterValue::Float32(n) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, n),
-            RegisterValue::Float64(n) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, n),
-            RegisterValue::String(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, s),
-            RegisterValue::Boolean(b) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, b),
-            RegisterValue::Map(m) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, m),
-            RegisterValue::Array(a) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, a),
+            RegisterValue::Empty =&gt; <span class="macro">write!</span>(f, <span class="string">"Empty"</span>),
+            RegisterValue::Int8(i) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, i),
+            RegisterValue::Int16(i) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, i),
+            RegisterValue::Int32(i) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, i),
+            RegisterValue::Int64(i) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, i),
+            RegisterValue::UInt8(i) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, i),
+            RegisterValue::UInt16(i) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, i),
+            RegisterValue::UInt32(i) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, i),
+            RegisterValue::UInt64(i) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, i),
+            RegisterValue::Float32(n) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, n),
+            RegisterValue::Float64(n) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, n),
+            RegisterValue::String(s) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, s),
+            RegisterValue::Boolean(b) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, b),
+            RegisterValue::Map(m) =&gt; <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, m),
+            RegisterValue::Array(a) =&gt; <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, a),
         }
     }
 }

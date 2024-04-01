@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/machine/bytecode/decode.rs`."><title>decode.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-cb6f1f67f1bcd037.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="strontium" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0 (cc66ad468 2023-10-03)" data-channel="1.73.0" data-search-js="search-6dfdfced5eff6596.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-1596385f77d47ef2.css" data-theme-dark-css="dark-0a43001d3fc2282c.css" data-theme-ayu-css="ayu-fd19013d6ce078bf.css" ><script src="../../../../static.files/storage-db41da1a38ea3cb8.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../../../static.files/light-1596385f77d47ef2.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../../../static.files/dark-0a43001d3fc2282c.css"><link rel="stylesheet" href="../../../../static.files/noscript-cffde32267a19fd6.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../strontium/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/machine/bytecode/decode.rs`."><title>decode.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="strontium" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0 (aedd173a2 2024-03-17)" data-channel="1.77.0" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../strontium/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -329,6 +331,14 @@
 <a href="#329" id="329">329</a>
 <a href="#330" id="330">330</a>
 <a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{
     BytecodeError,
     Instruction,
@@ -339,24 +349,22 @@
 
 <span class="kw">use </span>std::convert::{TryFrom, TryInto};
 
-<span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub struct </span>BytecodeParser {
-    bytes: Vec&lt;u8&gt;,
-    index: usize,
-    errors: Vec&lt;BytecodeError&gt;,
+<span class="kw">pub struct </span>BytecodeParser {
+    <span class="doccomment">/// A reference to the contents of the `bc` register, which contains program bytecode.
+    </span><span class="kw">pub </span>bytecode: Vec&lt;u8&gt;,
+    <span class="doccomment">/// The current position in the bytecode register.
+    </span>index: usize,
+    <span class="doccomment">/// Used to accumulate errors while parsing.
+    </span>errors: Vec&lt;BytecodeError&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; BytecodeParser {
-    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+<span class="kw">impl </span>BytecodeParser {
+    <span class="kw">pub fn </span>new(bytecode: Vec&lt;u8&gt;) -&gt; <span class="self">Self </span>{
         BytecodeParser {
-            bytes: <span class="macro">vec!</span>[],
+            bytecode,
             index: <span class="number">0</span>,
             errors: <span class="macro">vec!</span>[],
         }
-    }
-
-    <span class="kw">pub fn </span>add_bytecode(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bytecode: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
-        <span class="self">self</span>.bytes.append(bytecode);
     }
 
     <span class="doccomment">/// Advance the parser by one byte if possible.
@@ -365,32 +373,28 @@
             <span class="self">self</span>.index += <span class="number">1</span>;
             <span class="prelude-val">Ok</span>(())
         } <span class="kw">else </span>{
-            <span class="macro">println!</span>(<span class="string">&quot;ADVANCE&quot;</span>);
             <span class="prelude-val">Err</span>(BytecodeError::UnexpectedEof(<span class="self">self</span>.index <span class="kw">as </span>u32))
         }
     }
 
     <span class="kw">fn </span>peek(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u8 {
-        <span class="self">self</span>.bytes[<span class="self">self</span>.index]
+        <span class="self">self</span>.bytecode[<span class="self">self</span>.index]
     }
 
     <span class="doccomment">/// Check if the parser has reached the end of the bytecode.
     </span><span class="kw">fn </span>eof(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="macro">println!</span>(<span class="string">&quot;Calling byte parser eof()? index: {}, len: {}&quot;</span>, <span class="self">self</span>.index, <span class="self">self</span>.bytes.len());
-        <span class="self">self</span>.index &gt;= <span class="self">self</span>.bytes.len()
+        <span class="self">self</span>.index &gt;= <span class="self">self</span>.bytecode.len()
     }
-
 
     <span class="doccomment">/// Consume a number of bytes starting from the current position.
     </span><span class="kw">fn </span>consume_n_bytes(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: usize) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;u8&gt;, BytecodeError&gt; {
-        <span class="kw">if </span><span class="self">self</span>.index + n &gt; <span class="self">self</span>.bytes.len() {
-            <span class="macro">println!</span>(<span class="string">&quot;CONSUME_N_BYTES&quot;</span>);
-            <span class="prelude-val">Err</span>(BytecodeError::UnexpectedEof((<span class="self">self</span>.index + n) <span class="kw">as </span>u32))
+        <span class="kw">if </span><span class="self">self</span>.index + n &gt; <span class="self">self</span>.bytecode.len() {
+            <span class="prelude-val">Err</span>(BytecodeError::UnexpectedEof(<span class="self">self</span>.index <span class="kw">as </span>u32))
         } <span class="kw">else </span>{
             <span class="kw">let </span>start = <span class="self">self</span>.index;
             <span class="kw">let </span>end = start + n;
             <span class="self">self</span>.index = end;
-            <span class="prelude-val">Ok</span>(<span class="self">self</span>.bytes[start .. end].to_vec())
+            <span class="prelude-val">Ok</span>(<span class="self">self</span>.bytecode[start .. end].to_vec())
         }
     }
 
@@ -421,14 +425,13 @@
     </span><span class="kw">fn </span>expect_bytes(<span class="kw-2">&amp;mut </span><span class="self">self</span>, expected: Vec&lt;u8&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), BytecodeError&gt; {
         <span class="kw">let </span>end_index = <span class="self">self</span>.index + expected.len();
 
-        <span class="kw">if </span>end_index &gt; <span class="self">self</span>.bytes.len() {
-            <span class="macro">println!</span>(<span class="string">&quot;EXPECT BYTES&quot;</span>);
+        <span class="kw">if </span>end_index &gt; <span class="self">self</span>.bytecode.len() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(BytecodeError::UnexpectedEof(<span class="self">self</span>.index <span class="kw">as </span>u32));
         }
 
-        <span class="kw">let </span>actual = <span class="kw-2">&amp;</span><span class="self">self</span>.bytes[<span class="self">self</span>.index .. end_index];
+        <span class="kw">let </span>actual = <span class="kw-2">&amp;</span><span class="self">self</span>.bytecode[<span class="self">self</span>.index .. end_index];
 
-        <span class="kw">if </span>actual == expected.as_slice() {
+        <span class="kw">if </span>actual.to_vec() == expected.as_slice() {
             <span class="self">self</span>.index = end_index;
             <span class="prelude-val">Ok</span>(())
         } <span class="kw">else </span>{
@@ -439,16 +442,31 @@
         }
     }
 
+    <span class="kw">pub fn </span>value_to_byte(<span class="kw-2">&amp;</span><span class="self">self</span>, value: RegisterValue) -&gt; u8 {
+        <span class="kw">if let </span>RegisterValue::UInt8(byte) = value {
+            byte
+        } <span class="kw">else </span>{
+            <span class="macro">unreachable!</span>()
+        }
+    }
+
+    <span class="kw">pub fn </span>values_to_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>, values: Vec&lt;RegisterValue&gt;) -&gt; Vec&lt;u8&gt; {
+        values.iter().filter_map(|val| {
+            <span class="kw">if let </span>RegisterValue::UInt8(byte) = val {
+                <span class="prelude-val">Some</span>(<span class="kw-2">*</span>byte)
+            } <span class="kw">else </span>{
+                <span class="prelude-val">None </span><span class="comment">// Or handle differently, maybe even panic if you expect only UInt8 values.
+            </span>}
+        }).collect()
+    }
+
     <span class="kw">pub fn </span>parse_instruction(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Instruction, BytecodeError&gt; {
         <span class="kw">if </span><span class="self">self</span>.eof() {
-            <span class="macro">println!</span>(<span class="string">&quot;PARSE INSTRUCTION&quot;</span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(BytecodeError::UnexpectedEof(<span class="self">self</span>.index <span class="kw">as </span>u32));
-        }
+        };
 
-        <span class="kw">let </span>opcode = Opcode::from(<span class="self">self</span>.bytes[<span class="self">self</span>.index]);
+        <span class="kw">let </span>opcode = Opcode::from(<span class="self">self</span>.bytecode[<span class="self">self</span>.index].clone());
         <span class="self">self</span>.advance()<span class="question-mark">?</span>;
-
-        <span class="macro">println!</span>(<span class="string">&quot;Opcode: {:?}&quot;</span>, opcode);
 
         <span class="kw">let </span>instruction = <span class="kw">match </span>opcode {
             Opcode::HALT =&gt;  {
@@ -458,13 +476,13 @@
 
             Opcode::LOAD =&gt; {
                 <span class="kw">let </span>register = <span class="self">self</span>.consume_string()<span class="question-mark">?</span>;
-                <span class="macro">println!</span>(<span class="string">&quot;Decoded register {}, index {}&quot;</span>, register, <span class="self">self</span>.index);
+                <span class="macro">println!</span>(<span class="string">"Decoded register {}, index {}"</span>, register, <span class="self">self</span>.index);
                 <span class="kw">let </span>value_len = <span class="self">self</span>.consume_byte();
-                <span class="macro">println!</span>(<span class="string">&quot;Decoded value length {}, index {}, parsing register value&quot;</span>, value_len, <span class="self">self</span>.index);
+                <span class="macro">println!</span>(<span class="string">"Decoded value length {}, index {}, parsing register value"</span>, value_len, <span class="self">self</span>.index);
 
                 <span class="kw">let </span>consumed = <span class="self">self</span>.consume_n_bytes(value_len <span class="kw">as </span>usize)<span class="question-mark">?</span>.to_vec();
 
-                <span class="macro">println!</span>(<span class="string">&quot;consumed: {:?}&quot;</span>, consumed);
+                <span class="macro">println!</span>(<span class="string">"consumed: {:?}"</span>, consumed);
 
                 <span class="kw">let </span>value = RegisterValue::try_from(consumed).unwrap();
 
