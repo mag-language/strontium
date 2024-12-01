@@ -126,7 +126,6 @@ pub enum Instruction {
 
 	/// Set off an interrupt, for example to print a character to standard output
 	INTERRUPT {
-		address: String,
 		interrupt: Interrupt,
 	},
 /*

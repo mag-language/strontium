@@ -229,13 +229,13 @@ impl Into<Vec<u8>> for Instruction {
                 b
             },
 
-            Instruction::INTERRUPT { address, interrupt } => {
+            Instruction::INTERRUPT { interrupt } => {
                 let mut b = vec![];
 
                 b.push(interrupt.kind.into());
 
-                b.push(address.len() as u8);
-                b.append(&mut address.as_bytes().to_vec());
+                b.push(interrupt.address.len() as u8);
+                b.append(&mut interrupt.address.as_bytes().to_vec());
 
                 b
             },

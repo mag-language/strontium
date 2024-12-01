@@ -6,6 +6,8 @@ use super::{
     BitwiseMethod,
 };
 
+use crate::machine::Interrupt;
+
 use std::convert::{TryFrom, TryInto};
 
 pub struct BytecodeParser {
@@ -224,11 +226,13 @@ impl BytecodeParser {
             Opcode::INTERRUPT => {
                 println!(":: INTERRUPT");
                 let interrupt = self.consume_byte();
-                let register = self.consume_string();
+                let address = self.consume_string();
 
                 Instruction::INTERRUPT {
-                    interrupt,
-                    register,
+                    interrupt: Interrupt {
+                        address: address?,
+                        kind: interrupt.into(),
+                    },
                 }
             },
 

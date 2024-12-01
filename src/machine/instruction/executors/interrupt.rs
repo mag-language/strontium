@@ -13,7 +13,7 @@ impl Executor for InterruptExecutor {
         let instruction = machine.parse_instruction()?;
 
         println!("INTERRUPT :: Parsed expression");
-        if let Instruction::INTERRUPT { address: _, interrupt } = instruction {
+        if let Instruction::INTERRUPT { interrupt } = instruction {
             match interrupt.kind {
                 InterruptKind::Print => {
                     println!("INTERRUPT :: Got InterruptKind::Print");
