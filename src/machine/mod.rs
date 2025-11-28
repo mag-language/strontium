@@ -14,7 +14,6 @@ use self::bytecode::decode::BytecodeParser;
 
 use std::convert::TryInto;
 use std::collections::{BTreeMap, HashMap};
-use std::hash::Hash;
 use std::rc::Rc;
 
 pub struct DispatchMethod {
@@ -290,8 +289,8 @@ impl Strontium {
 		}
 	}
 
+	#[allow(dead_code)]
 	fn peek(&self) -> u8 {
-		let bytecode = self.bc();
 		self.bytecode_parser.bytecode[self.ip()]
 	}
 

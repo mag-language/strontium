@@ -1,10 +1,6 @@
-use std::convert::{TryFrom, TryInto};
 use crate::Instruction;
 use crate::machine::{Opcode, BitwiseMethod};
-use crate::machine::register::{
-    RegisterValue,
-    RegisterValueError,
-};
+use crate::machine::register::RegisterValue;
 
 pub mod encode;
 pub mod decode;

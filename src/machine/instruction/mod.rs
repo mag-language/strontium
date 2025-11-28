@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 use serde::{Serialize, Deserialize};
 
 use crate::types::StrontiumError;

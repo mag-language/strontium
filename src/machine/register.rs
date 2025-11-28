@@ -1,5 +1,4 @@
-use num_derive::{FromPrimitive, ToPrimitive};
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt};
 
 use std::convert::TryFrom;
 use std::io::{Cursor, Read};
@@ -363,7 +362,7 @@ impl std::fmt::Display for RegisterValue {
 }
 
 /// Define possible register types which support conversion to byte values for encoding.
-#[derive(Debug, PartialEq, ToPrimitive, FromPrimitive)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum RegisterType {
     Empty   = 100,
     Int8    = 101,
@@ -380,4 +379,41 @@ pub enum RegisterType {
     Boolean = 112,
     Map     = 113,
     Array   = 114,
+}
+
+impl num_traits::ToPrimitive for RegisterType {
+    fn to_i64(&self) -> Option<i64> {
+        Some(*self as i64)
+    }
+
+    fn to_u64(&self) -> Option<u64> {
+        Some(*self as u64)
+    }
+}
+
+impl num_traits::FromPrimitive for RegisterType {
+    fn from_i64(n: i64) -> Option<Self> {
+        Self::from_u64(n as u64)
+    }
+
+    fn from_u64(n: u64) -> Option<Self> {
+        match n {
+            100 => Some(RegisterType::Empty),
+            101 => Some(RegisterType::Int8),
+            102 => Some(RegisterType::Int16),
+            103 => Some(RegisterType::Int32),
+            104 => Some(RegisterType::Int64),
+            105 => Some(RegisterType::UInt8),
+            106 => Some(RegisterType::UInt16),
+            107 => Some(RegisterType::UInt32),
+            108 => Some(RegisterType::UInt64),
+            109 => Some(RegisterType::Float32),
+            110 => Some(RegisterType::Float64),
+            111 => Some(RegisterType::String),
+            112 => Some(RegisterType::Boolean),
+            113 => Some(RegisterType::Map),
+            114 => Some(RegisterType::Array),
+            _ => None,
+        }
+    }
 }

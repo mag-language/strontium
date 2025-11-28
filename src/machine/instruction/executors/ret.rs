@@ -1,12 +1,10 @@
 use crate::machine::{
     Executor,
     Strontium,
-    StrontiumError, StackFrame,
+    StrontiumError,
 };
 
 use crate::Instruction;
-
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ReturnExecutor;
