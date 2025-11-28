@@ -13,7 +13,9 @@ pub struct CalculateExecutor;
 
 impl Executor for CalculateExecutor {
     fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError> {
-        println!("CALCULATE instruction");
+        if machine.debug {
+            println!("CALCULATE instruction");
+        }
         let instruction = machine.parse_instruction()?;
 
         if let Instruction::CALCULATE { method, operand1, operand2, destination } = instruction {

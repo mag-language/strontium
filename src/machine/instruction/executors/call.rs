@@ -13,7 +13,9 @@ pub struct CallExecutor;
 
 impl Executor for CallExecutor {
     fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError> {
-        println!("CALL instruction");
+        if machine.debug {
+            println!("CALL instruction");
+        }
         let instruction = machine.parse_instruction()?;
 
         if let Instruction::CALL { address } = instruction {

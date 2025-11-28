@@ -17,14 +17,17 @@ pub struct BytecodeParser {
     pub index: usize,
     /// Used to accumulate errors while parsing.
     errors: Vec<BytecodeError>,
+    /// Whether to print debug output.
+    pub debug: bool,
 }
 
 impl BytecodeParser {
-    pub fn new(bytecode: Vec<u8>) -> Self {
+    pub fn new(bytecode: Vec<u8>, debug: bool) -> Self {
         BytecodeParser {
             bytecode,
             index: 0,
             errors: vec![],
+            debug,
         }
     }
 
@@ -61,7 +64,9 @@ impl BytecodeParser {
             let start = self.index;
             let end = start + n;
             self.index = end;
-            println!("End: {}", end);
+            if self.debug {
+                println!("End: {}", end);
+            }
             Ok(self.bytecode[start .. end].to_vec())
         }
     }
@@ -138,21 +143,21 @@ impl BytecodeParser {
 
         let instruction = match opcode {
             Opcode::HALT =>  {
-                println!(":: HALT");
+                if self.debug { println!(":: HALT"); }
                 self.expect_bytes(vec![0, 0, 0, 0, 0, 0, 0])?;
                 Instruction::HALT
             },
 
             Opcode::LOAD => {
-                println!(":: LOAD");
+                if self.debug { println!(":: LOAD"); }
                 let register = self.consume_string()?;
-                println!("Decoded register {}, index {}", register, self.index);
+                if self.debug { println!("Decoded register {}, index {}", register, self.index); }
                 let value_len = self.consume_byte();
-                println!("Decoded value length {}, index {}, parsing register value", value_len, self.index);
+                if self.debug { println!("Decoded value length {}, index {}, parsing register value", value_len, self.index); }
 
                 let consumed = self.consume_n_bytes(value_len as usize)?.to_vec();
 
-                println!("consumed: {:?}", consumed);
+                if self.debug { println!("consumed: {:?}", consumed); }
 
                 let value = RegisterValue::try_from(consumed).unwrap();
 
@@ -163,7 +168,7 @@ impl BytecodeParser {
             },
 
             Opcode::MOVE | Opcode::COPY => {
-                println!(":: MOVE/COPY");
+                if self.debug { println!(":: MOVE/COPY"); }
                 let source_len = self.peek();
                 self.advance()?;
                 let source = self.consume_n_bytes(source_len as usize)?;
@@ -186,7 +191,7 @@ impl BytecodeParser {
             },
 
             Opcode::PUSH => {
-                println!(":: PUSH");
+                if self.debug { println!(":: PUSH"); }
                 let destination_len = self.peek();
                 self.advance()?;
                 let destination = self.consume_n_bytes(destination_len as usize)?;
@@ -202,7 +207,7 @@ impl BytecodeParser {
             },
 
             Opcode::APPEND => {
-                println!(":: APPEND");
+                if self.debug { println!(":: APPEND"); }
                 let destination_len = self.peek();
                 self.advance()?;
                 let destination = self.consume_n_bytes(destination_len as usize)?;
@@ -224,7 +229,7 @@ impl BytecodeParser {
             },
 
             Opcode::INTERRUPT => {
-                println!(":: INTERRUPT");
+                if self.debug { println!(":: INTERRUPT"); }
                 let interrupt = self.consume_byte();
                 let address = self.consume_string();
 
@@ -237,7 +242,7 @@ impl BytecodeParser {
             },
 
             Opcode::CALCULATE => {
-                println!(":: CALCULATE");
+                if self.debug { println!(":: CALCULATE"); }
                 let method = self.peek();
                 self.advance()?;
 
@@ -262,7 +267,7 @@ impl BytecodeParser {
             },
 
             Opcode::COMPARE => {
-                println!(":: COMPARE");
+                if self.debug { println!(":: COMPARE"); }
                 let method = self.peek();
                 self.advance()?;
 
@@ -287,7 +292,7 @@ impl BytecodeParser {
             },
 
             Opcode::BITWISE => {
-                println!(":: BITWISE");
+                if self.debug { println!(":: BITWISE"); }
                 let method_byte = self.consume_byte();
 
                 let method = match method_byte {
@@ -344,7 +349,7 @@ impl BytecodeParser {
             },
 
             Opcode::JUMP => {
-                println!(":: JUMP");
+                if self.debug { println!(":: JUMP"); }
                 let destination = self.consume_u32()?;
             
                 Instruction::JUMP {
@@ -353,7 +358,7 @@ impl BytecodeParser {
             },
             
             Opcode::JUMPC => {
-                println!(":: JUMPC");
+                if self.debug { println!(":: JUMPC"); }
                 let destination = self.consume_u32()?;
                 let conditional_address = self.consume_string()?;
             

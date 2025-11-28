@@ -43,11 +43,13 @@ pub struct Strontium {
 	should_continue: bool,
 	dispatch_table:  DispatchTable,
 	call_stack: 	 Vec<StackFrame>,
+	/// Whether to print debug output during execution.
+	pub debug:       bool,
 }
 
 impl Strontium {
 	/// Create a new instance of the virtual machine
-	pub fn new() -> Self {
+	pub fn new(debug: bool) -> Self {
 		let mut executors: HashMap<Opcode, Rc<dyn Executor>> = HashMap::new();
 
         executors.insert(Opcode::HALT, Rc::new(HaltExecutor));
@@ -63,10 +65,11 @@ impl Strontium {
 			registers,
 			executors,
 			ip:      		 0,
-			bytecode_parser: BytecodeParser::new(vec![]),
+			bytecode_parser: BytecodeParser::new(vec![], debug),
 			should_continue: true,
 			dispatch_table:  BTreeMap::new(),
 			call_stack: 	 vec![],
+			debug,
 		}
 	}
 
@@ -80,6 +83,13 @@ impl Strontium {
     pub fn resolve_method(&self, name: &str, argument_types: Vec<ValueType>) -> Option<&DispatchMethod> {
         self.dispatch_table.get(&(name.to_string(), argument_types))
     }
+
+	/// Reset the VM state for a new execution.
+	pub fn reset(&mut self) {
+		self.registers.set("bc", RegisterValue::Array(vec![]));
+		self.bytecode_parser.set_bytecode(vec![]);
+		self.should_continue = true;
+	}
 
 	/// Append machine code to the array in the bytecode register.
     pub fn push_bytecode(&mut self, bytes: Vec<u8>) {
@@ -115,7 +125,9 @@ impl Strontium {
 		let opcode: Opcode = self.consume_u8()?.into();
 		let executor = self.executors.get(&opcode).cloned();
 
-		println!("Launching instruction executor: {:?}", Opcode::from(opcode.clone()));
+		if self.debug {
+			println!("Launching instruction executor: {:?}", Opcode::from(opcode.clone()));
+		}
 
 		self.should_continue = match executor {
 			Some(executor) => executor.execute(self)?,
@@ -173,13 +185,17 @@ impl Strontium {
 		let ip = self.ip();
 		let bytecode = self.bc();
 
-		println!("IP: {}", ip);
+		if self.debug {
+			println!("IP: {}", ip);
+		}
 
 		if ip + size > bytecode.len() {
 			Err(StrontiumError::UnexpectedEof)
 		} else {
 			let bytes = bytecode[ip .. ip + size].to_vec();
-			println!("Advancing by: {}", size);
+			if self.debug {
+				println!("Advancing by: {}", size);
+			}
 			self.advance_by(size)?;
 
 			Ok(bytes.iter().map(|b| match b {
@@ -255,10 +271,14 @@ impl Strontium {
 	}
 
 	pub fn consume_string(&mut self) -> Result<String, StrontiumError> {
-		println!("Consume String");
+		if self.debug {
+			println!("Consume String");
+		}
 		// First, consume the length of the string (assuming it's stored as a 32-bit unsigned integer)
 		let length = self.consume_u32()? as usize;
-		println!("Length: {}", length);
+		if self.debug {
+			println!("Length: {}", length);
+		}
 
 		// Now, consume the actual string bytes
 		let bytes = self.consume_bytes(length)?;

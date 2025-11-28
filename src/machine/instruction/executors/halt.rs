@@ -9,8 +9,10 @@ use crate::Instruction;
 pub struct HaltExecutor;
 
 impl Executor for HaltExecutor {
-    fn execute(&self, _machine: &mut Strontium) -> Result<bool, StrontiumError> {
-        println!("HALT instruction");
+    fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError> {
+        if machine.debug {
+            println!("HALT instruction");
+        }
         Ok(false)
     }
 }
