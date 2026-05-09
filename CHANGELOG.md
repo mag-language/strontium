@@ -27,11 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Update outdated unreleased diff link.
 -->
 
-## Unreleased
+## [0.7.0] - May 9, 2026
 
 ### Added
 
+- `DispatchPattern` enum representing either a specific value match or a wildcard (`Any`), used for multimethod dispatch at runtime.
+- New instruction executors: `CopyExecutor`, `DispatchExecutor`, `JumpExecutor`, `LoadLocalExecutor`, and `StoreLocalExecutor`.
+- A `--debug` flag to control VM output verbosity.
 - An actual bytecode format so we can convert `Instruction`s to bytes.
+
+### Fixed
+
+- Interrupt handling reliability issues.
 
 ## [0.6.0] - October 22, 2023
 ### Added
