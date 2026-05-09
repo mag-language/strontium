@@ -92,6 +92,7 @@ impl Strontium {
         executors.insert(Opcode::Halt, Rc::new(HaltExecutor));
         executors.insert(Opcode::Load, Rc::new(LoadExecutor));
         executors.insert(Opcode::Calculate, Rc::new(CalculateExecutor));
+        executors.insert(Opcode::Compare, Rc::new(CompareExecutor));
         executors.insert(Opcode::Call, Rc::new(CallExecutor));
         executors.insert(Opcode::Interrupt, Rc::new(InterruptExecutor));
         executors.insert(Opcode::Return, Rc::new(ReturnExecutor));

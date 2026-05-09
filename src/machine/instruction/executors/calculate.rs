@@ -1,5 +1,5 @@
 use crate::machine::{Executor, Strontium, StrontiumError};
-
+use crate::machine::register::RegisterValue;
 use super::super::CalculationMethod;
 use crate::Instruction;
 
@@ -30,11 +30,12 @@ impl Executor for CalculateExecutor {
                     CalculationMethod::SUBTRACT => op1.clone() - op2.clone(),
                     CalculationMethod::MULTIPLY => op1.clone() * op2.clone(),
                     CalculationMethod::DIVIDE => op1.clone() / op2.clone(),
-                    /*
-                                        CalculationMethod::Modulo => op1 % op2,
-                                        CalculationMethod::Power => op1.pow(op2),
-                    */
-                    _ => unimplemented!(),
+                    CalculationMethod::MODULO => op1.clone() % op2.clone(),
+                    CalculationMethod::POWER => match (op1.clone(), op2.clone()) {
+                        (RegisterValue::Int64(a), RegisterValue::Int64(b)) => RegisterValue::Int64(a.pow(b as u32)),
+                        (RegisterValue::Float64(a), RegisterValue::Float64(b)) => RegisterValue::Float64(a.powf(b)),
+                        _ => panic!("Incompatible types for power"),
+                    },
                 };
 
                 machine.registers.set(&destination, result);

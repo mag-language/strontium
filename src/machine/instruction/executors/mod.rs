@@ -1,5 +1,6 @@
 mod calculate;
 mod call;
+mod compare;
 mod copy;
 mod dispatch;
 mod halt;
@@ -12,6 +13,7 @@ mod store_local;
 
 pub use self::calculate::*;
 pub use self::call::*;
+pub use self::compare::*;
 pub use self::copy::*;
 pub use self::dispatch::*;
 pub use self::halt::*;

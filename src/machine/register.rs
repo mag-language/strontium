@@ -389,6 +389,46 @@ impl Div for RegisterValue {
     }
 }
 
+impl std::ops::Rem for RegisterValue {
+    type Output = Self;
+
+    fn rem(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::Int8(a), Self::Int8(b)) => Self::Int8(a % b),
+            (Self::Int16(a), Self::Int16(b)) => Self::Int16(a % b),
+            (Self::Int32(a), Self::Int32(b)) => Self::Int32(a % b),
+            (Self::Int64(a), Self::Int64(b)) => Self::Int64(a % b),
+            (Self::UInt8(a), Self::UInt8(b)) => Self::UInt8(a % b),
+            (Self::UInt16(a), Self::UInt16(b)) => Self::UInt16(a % b),
+            (Self::UInt32(a), Self::UInt32(b)) => Self::UInt32(a % b),
+            (Self::UInt64(a), Self::UInt64(b)) => Self::UInt64(a % b),
+            (Self::Float32(a), Self::Float32(b)) => Self::Float32(a % b),
+            (Self::Float64(a), Self::Float64(b)) => Self::Float64(a % b),
+            _ => panic!("Incompatible types for modulo"),
+        }
+    }
+}
+
+impl PartialOrd for RegisterValue {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match (self, other) {
+            (Self::Int8(a), Self::Int8(b)) => a.partial_cmp(b),
+            (Self::Int16(a), Self::Int16(b)) => a.partial_cmp(b),
+            (Self::Int32(a), Self::Int32(b)) => a.partial_cmp(b),
+            (Self::Int64(a), Self::Int64(b)) => a.partial_cmp(b),
+            (Self::UInt8(a), Self::UInt8(b)) => a.partial_cmp(b),
+            (Self::UInt16(a), Self::UInt16(b)) => a.partial_cmp(b),
+            (Self::UInt32(a), Self::UInt32(b)) => a.partial_cmp(b),
+            (Self::UInt64(a), Self::UInt64(b)) => a.partial_cmp(b),
+            (Self::Float32(a), Self::Float32(b)) => a.partial_cmp(b),
+            (Self::Float64(a), Self::Float64(b)) => a.partial_cmp(b),
+            (Self::String(a), Self::String(b)) => a.partial_cmp(b),
+            (Self::Boolean(a), Self::Boolean(b)) => a.partial_cmp(b),
+            _ => None,
+        }
+    }
+}
+
 impl std::fmt::Display for RegisterValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
