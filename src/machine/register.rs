@@ -1,11 +1,11 @@
 use byteorder::{LittleEndian, ReadBytesExt};
 
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
 use std::convert::TryFrom;
 use std::io::{Cursor, Read};
-use std::collections::{HashMap, BTreeMap};
+use std::ops::{Add, Div, Mul, Sub};
 use std::string::String;
-use std::ops::{Add, Sub, Mul, Div};
-use serde::{Serialize, Deserialize};
 
 use self::RegisterValue::*;
 
@@ -37,9 +37,7 @@ impl<'a> Registers {
         registers.insert("r7".to_string(), Empty);
         registers.insert("r8".to_string(), Empty);
 
-        Self {
-            registers,
-        }
+        Self { registers }
     }
 
     pub fn set(&mut self, name: &str, value: RegisterValue) {
@@ -62,7 +60,8 @@ impl<'a> Registers {
 
     pub fn allocate_register(&mut self) -> String {
         // Collect the names of empty registers
-        let empty_registers: Vec<String> = self.registers
+        let empty_registers: Vec<String> = self
+            .registers
             .iter()
             .filter_map(|(name, value)| {
                 if matches!(value, RegisterValue::Empty) {
@@ -87,7 +86,8 @@ impl<'a> Registers {
 
     // Add a method to free a register
     pub fn free_register(&mut self, name: &str) {
-        self.registers.insert(name.to_string(), RegisterValue::Empty);
+        self.registers
+            .insert(name.to_string(), RegisterValue::Empty);
     }
 }
 
@@ -127,21 +127,21 @@ pub enum RegisterValue {
 impl RegisterValue {
     pub fn get_type(&self) -> RegisterType {
         match self {
-            Self::Empty      => RegisterType::Empty,
-            Self::Int8(_)    => RegisterType::Int8,
-            Self::Int16(_)   => RegisterType::Int16,
-            Self::Int32(_)   => RegisterType::Int32,
-            Self::Int64(_)   => RegisterType::Int64,
-            Self::UInt8(_)   => RegisterType::UInt8,
-            Self::UInt16(_)  => RegisterType::UInt16,
-            Self::UInt32(_)  => RegisterType::UInt32,
-            Self::UInt64(_)  => RegisterType::UInt64,
+            Self::Empty => RegisterType::Empty,
+            Self::Int8(_) => RegisterType::Int8,
+            Self::Int16(_) => RegisterType::Int16,
+            Self::Int32(_) => RegisterType::Int32,
+            Self::Int64(_) => RegisterType::Int64,
+            Self::UInt8(_) => RegisterType::UInt8,
+            Self::UInt16(_) => RegisterType::UInt16,
+            Self::UInt32(_) => RegisterType::UInt32,
+            Self::UInt64(_) => RegisterType::UInt64,
             Self::Float32(_) => RegisterType::Float32,
             Self::Float64(_) => RegisterType::Float64,
-            Self::String(_)  => RegisterType::String,
+            Self::String(_) => RegisterType::String,
             Self::Boolean(_) => RegisterType::Boolean,
-            Self::Map(_)     => RegisterType::Map,
-            Self::Array(_)   => RegisterType::Array,
+            Self::Map(_) => RegisterType::Map,
+            Self::Array(_) => RegisterType::Array,
         }
     }
 }
@@ -152,64 +152,64 @@ impl Into<Vec<u8>> for RegisterValue {
         match self {
             RegisterValue::Empty => {
                 bytes.push(1);
-            },
+            }
             RegisterValue::Int8(i) => {
                 bytes.push(2); // Type tag for Int32
                 bytes.extend_from_slice(&i.to_le_bytes());
-            },
+            }
             RegisterValue::Int16(i) => {
                 bytes.push(3); // Type tag for Int32
                 bytes.extend_from_slice(&i.to_le_bytes());
-            },
+            }
             RegisterValue::Int32(i) => {
                 bytes.push(4); // Type tag for Int32
                 bytes.extend_from_slice(&i.to_le_bytes());
-            },
+            }
             RegisterValue::Int64(i) => {
                 bytes.push(5); // Type tag for Int32
                 bytes.extend_from_slice(&i.to_le_bytes());
-            },
+            }
             RegisterValue::UInt8(i) => {
                 bytes.push(6); // Type tag for UInt8
                 bytes.extend_from_slice(&i.to_le_bytes());
-            },
+            }
             RegisterValue::UInt16(i) => {
                 bytes.push(7); // Type tag for UInt16
                 bytes.extend_from_slice(&i.to_le_bytes());
-            },
+            }
             RegisterValue::UInt32(i) => {
                 bytes.push(8); // Type tag for UInt32
                 bytes.extend_from_slice(&i.to_le_bytes());
-            },
+            }
             RegisterValue::UInt64(i) => {
                 bytes.push(9); // Type tag for UInt64
                 bytes.extend_from_slice(&i.to_le_bytes());
-            },
+            }
             RegisterValue::Float32(f) => {
                 bytes.push(10); // Type tag for Float64
                 bytes.extend_from_slice(&f.to_le_bytes());
-            },
+            }
             RegisterValue::Float64(f) => {
                 bytes.push(11); // Type tag for Float64
                 bytes.extend_from_slice(&f.to_le_bytes());
-            },
+            }
             RegisterValue::String(s) => {
                 bytes.push(12); // Type tag for String
                 let string_bytes = s.into_bytes();
                 let length = string_bytes.len() as u32;
                 bytes.extend_from_slice(&length.to_le_bytes());
                 bytes.extend_from_slice(&string_bytes);
-            },
+            }
             RegisterValue::Boolean(b) => {
                 bytes.push(4); // Type tag for Boolean
                 bytes.push(b as u8);
-            },
+            }
             RegisterValue::Map(_) => {
                 println!("map register type is unimplemented");
-            },
+            }
             RegisterValue::Array(_) => {
                 println!("array register type is unimplemented");
-            },
+            }
         }
         bytes
     }
@@ -228,24 +228,74 @@ impl TryFrom<Vec<u8>> for RegisterValue {
 
         match type_tag {
             1 => Ok(RegisterValue::Empty),
-            2 => Ok(RegisterValue::Int8(cursor.read_i8().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
-            3 => Ok(RegisterValue::Int16(cursor.read_i16::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
-            4 => Ok(RegisterValue::Int32(cursor.read_i32::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
-            5 => Ok(RegisterValue::Int64(cursor.read_i64::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
-            6 => Ok(RegisterValue::UInt8(cursor.read_u8().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
-            7 => Ok(RegisterValue::UInt16(cursor.read_u16::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
-            8 => Ok(RegisterValue::UInt32(cursor.read_u32::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
-            9 => Ok(RegisterValue::UInt64(cursor.read_u64::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
-            10 => Ok(RegisterValue::Float32(cursor.read_f32::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
-            11 => Ok(RegisterValue::Float64(cursor.read_f64::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?)),
+            2 => Ok(RegisterValue::Int8(
+                cursor
+                    .read_i8()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
+            3 => Ok(RegisterValue::Int16(
+                cursor
+                    .read_i16::<LittleEndian>()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
+            4 => Ok(RegisterValue::Int32(
+                cursor
+                    .read_i32::<LittleEndian>()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
+            5 => Ok(RegisterValue::Int64(
+                cursor
+                    .read_i64::<LittleEndian>()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
+            6 => Ok(RegisterValue::UInt8(
+                cursor
+                    .read_u8()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
+            7 => Ok(RegisterValue::UInt16(
+                cursor
+                    .read_u16::<LittleEndian>()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
+            8 => Ok(RegisterValue::UInt32(
+                cursor
+                    .read_u32::<LittleEndian>()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
+            9 => Ok(RegisterValue::UInt64(
+                cursor
+                    .read_u64::<LittleEndian>()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
+            10 => Ok(RegisterValue::Float32(
+                cursor
+                    .read_f32::<LittleEndian>()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
+            11 => Ok(RegisterValue::Float64(
+                cursor
+                    .read_f64::<LittleEndian>()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?,
+            )),
             12 => {
-                let length = cursor.read_u32::<LittleEndian>().map_err(|_| RegisterValueError::NotEnoughBytes)?;
+                let length = cursor
+                    .read_u32::<LittleEndian>()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?;
                 let mut string_bytes = vec![0; length as usize];
-                cursor.read_exact(&mut string_bytes).map_err(|_| RegisterValueError::NotEnoughBytes)?;
-                let string = String::from_utf8(string_bytes).map_err(RegisterValueError::Utf8Error)?;
+                cursor
+                    .read_exact(&mut string_bytes)
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?;
+                let string =
+                    String::from_utf8(string_bytes).map_err(RegisterValueError::Utf8Error)?;
                 Ok(RegisterValue::String(string))
-            },
-            13 => Ok(RegisterValue::Boolean(cursor.read_u8().map_err(|_| RegisterValueError::NotEnoughBytes)? != 0)),
+            }
+            13 => Ok(RegisterValue::Boolean(
+                cursor
+                    .read_u8()
+                    .map_err(|_| RegisterValueError::NotEnoughBytes)?
+                    != 0,
+            )),
             _ => Err(RegisterValueError::InvalidTypeTag),
         }
     }
@@ -364,21 +414,21 @@ impl std::fmt::Display for RegisterValue {
 /// Define possible register types which support conversion to byte values for encoding.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum RegisterType {
-    Empty   = 100,
-    Int8    = 101,
-    Int16   = 102,
-    Int32   = 103,
-    Int64   = 104,
-    UInt8   = 105,
-    UInt16  = 106,
-    UInt32  = 107,
-    UInt64  = 108,
+    Empty = 100,
+    Int8 = 101,
+    Int16 = 102,
+    Int32 = 103,
+    Int64 = 104,
+    UInt8 = 105,
+    UInt16 = 106,
+    UInt32 = 107,
+    UInt64 = 108,
     Float32 = 109,
     Float64 = 110,
-    String  = 111,
+    String = 111,
     Boolean = 112,
-    Map     = 113,
-    Array   = 114,
+    Map = 113,
+    Array = 114,
 }
 
 impl num_traits::ToPrimitive for RegisterType {

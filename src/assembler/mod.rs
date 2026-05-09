@@ -17,7 +17,7 @@ pub fn parse(input: String) -> Vec<Instruction> {
         println!("Text:    {}", pair.as_str());*/
 
         match ins.as_rule() {
-        	Rule::Halt => accumulator.push(Instruction::HALT),
+        	Rule::Halt => accumulator.push(Instruction::Halt),
         	Rule::Load => println!("Load"),
         	Rule::Move => println!("Move"),
         	Rule::Copy => println!("Copy"),
@@ -58,6 +58,6 @@ mod tests {
 
     #[test]
     fn halt_instruction() {
-    	assert_eq!(parse("HALT\nLOAD R1 22".to_string()), vec![Instruction::HALT])
+    	assert_eq!(parse("HALT\nLOAD R1 22".to_string()), vec![Instruction::Halt])
     }
 }

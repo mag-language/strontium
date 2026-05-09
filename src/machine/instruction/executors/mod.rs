@@ -1,13 +1,23 @@
 mod calculate;
 mod call;
+mod copy;
+mod dispatch;
 mod halt;
 mod interrupt;
+mod jump;
 mod load;
+mod load_local;
 mod ret;
+mod store_local;
 
-pub use self::halt::*;
-pub use self::load::*;
-pub use self::interrupt::*;
-pub use self::call::*;
 pub use self::calculate::*;
+pub use self::call::*;
+pub use self::copy::*;
+pub use self::dispatch::*;
+pub use self::halt::*;
+pub use self::interrupt::*;
+pub use self::jump::*;
+pub use self::load::*;
+pub use self::load_local::*;
 pub use self::ret::*;
+pub use self::store_local::*;

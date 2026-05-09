@@ -1,12 +1,24 @@
-use crate::Instruction;
 use crate::machine::BitwiseMethod;
+use crate::Instruction;
 
 impl Into<Vec<u8>> for BitwiseMethod {
-	fn into(self) -> Vec<u8> {
+    fn into(self) -> Vec<u8> {
         match self {
-            BitwiseMethod::AND { ref a, ref b, ref out }
-            | BitwiseMethod::OR { ref a, ref b, ref out }
-            | BitwiseMethod::XOR { ref a, ref b, ref out } => {
+            BitwiseMethod::AND {
+                ref a,
+                ref b,
+                ref out,
+            }
+            | BitwiseMethod::OR {
+                ref a,
+                ref b,
+                ref out,
+            }
+            | BitwiseMethod::XOR {
+                ref a,
+                ref b,
+                ref out,
+            } => {
                 let mut bytes = vec![];
 
                 // Push the method as a single byte
@@ -22,9 +34,18 @@ impl Into<Vec<u8>> for BitwiseMethod {
                 bytes.append(&mut out.as_bytes().to_vec());
 
                 bytes
-            },
+            }
 
-            BitwiseMethod::LSH { ref a, ref out, amount} | BitwiseMethod::RSH { ref a, ref out, amount} => {
+            BitwiseMethod::LSH {
+                ref a,
+                ref out,
+                amount,
+            }
+            | BitwiseMethod::RSH {
+                ref a,
+                ref out,
+                amount,
+            } => {
                 let mut bytes = vec![];
 
                 // Push the method as a single byte
@@ -40,8 +61,8 @@ impl Into<Vec<u8>> for BitwiseMethod {
 
                 bytes
             }
-        
-            BitwiseMethod::NOT { ref a, ref out} => {
+
+            BitwiseMethod::NOT { ref a, ref out } => {
                 let mut bytes = vec![];
 
                 // Push the method as a single byte
@@ -69,8 +90,8 @@ impl Into<Vec<u8>> for Instruction {
 
         let mut data: Vec<u8> = match self {
             // Add seven zeroes for a total of eight zero bytes.
-            Instruction::HALT => vec![0, 0, 0, 0, 0, 0, 0],
-            Instruction::LOAD { value, register } => {
+            Instruction::Halt => vec![0, 0, 0, 0, 0, 0, 0],
+            Instruction::Load { value, register } => {
                 let mut b = vec![];
 
                 b.push(register.len() as u8);
@@ -80,13 +101,19 @@ impl Into<Vec<u8>> for Instruction {
                 //println!("Value bytes: {:?}", value_bytes);
                 //println!("Value bytes len: {:?}", value_bytes.len());
                 b.push(value_bytes.len() as u8);
-                b.append(&mut value_bytes[0 .. value_bytes.len()].to_vec());
+                b.append(&mut value_bytes[0..value_bytes.len()].to_vec());
 
                 b
-            },
+            }
 
-            Instruction::MOVE { source, destination }
-            | Instruction::COPY { source, destination } => {
+            Instruction::Move {
+                source,
+                destination,
+            }
+            | Instruction::Copy {
+                source,
+                destination,
+            } => {
                 let mut b = vec![];
 
                 b.push(source.len() as u8);
@@ -96,9 +123,9 @@ impl Into<Vec<u8>> for Instruction {
                 b.append(&mut destination.as_bytes().to_vec());
 
                 b
-            },
+            }
 
-            Instruction::PUSH { value, destination } => {
+            Instruction::Push { value, destination } => {
                 let mut b = vec![];
 
                 b.push(destination.len() as u8);
@@ -110,9 +137,9 @@ impl Into<Vec<u8>> for Instruction {
                 b.append(&mut value_bytes);
 
                 b
-            },
+            }
 
-            Instruction::APPEND { value, destination } => {
+            Instruction::Append { value, destination } => {
                 let mut b = vec![];
 
                 b.push(destination.len() as u8);
@@ -125,26 +152,9 @@ impl Into<Vec<u8>> for Instruction {
                 }
 
                 b
-            },
+            }
 
-            Instruction::CALCULATE { method, operand1, operand2, destination } => {
-                let mut b = vec![];
-
-                b.push(method.into());
-
-                b.push(operand1.len() as u8);
-                b.append(&mut operand1.as_bytes().to_vec());
-
-                b.push(operand2.len() as u8);
-                b.append(&mut operand2.as_bytes().to_vec());
-
-                b.push(destination.len() as u8);
-                b.append(&mut destination.as_bytes().to_vec());
-
-                b
-            },
-
-            Instruction::COMPARE {
+            Instruction::Calculate {
                 method,
                 operand1,
                 operand2,
@@ -164,11 +174,31 @@ impl Into<Vec<u8>> for Instruction {
                 b.append(&mut destination.as_bytes().to_vec());
 
                 b
-            },
+            }
 
-            Instruction::BITWISE {
+            Instruction::Compare {
                 method,
+                operand1,
+                operand2,
+                destination,
             } => {
+                let mut b = vec![];
+
+                b.push(method.into());
+
+                b.push(operand1.len() as u8);
+                b.append(&mut operand1.as_bytes().to_vec());
+
+                b.push(operand2.len() as u8);
+                b.append(&mut operand2.as_bytes().to_vec());
+
+                b.push(destination.len() as u8);
+                b.append(&mut destination.as_bytes().to_vec());
+
+                b
+            }
+
+            Instruction::Bitwise { method } => {
                 let mut bytes = vec![];
 
                 bytes.push(method.clone().get_method_byte());
@@ -185,7 +215,7 @@ impl Into<Vec<u8>> for Instruction {
 
                         bytes.push(out.len() as u8);
                         bytes.append(&mut out.as_bytes().to_vec());
-                    },
+                    }
 
                     BitwiseMethod::LSH { a, out, amount }
                     | BitwiseMethod::RSH { a, out, amount } => {
@@ -196,7 +226,7 @@ impl Into<Vec<u8>> for Instruction {
                         bytes.append(&mut out.as_bytes().to_vec());
 
                         bytes.push(amount as u8);
-                    },
+                    }
 
                     BitwiseMethod::NOT { a, out } => {
                         bytes.push(a.len() as u8);
@@ -204,21 +234,24 @@ impl Into<Vec<u8>> for Instruction {
 
                         bytes.push(out.len() as u8);
                         bytes.append(&mut out.as_bytes().to_vec());
-                    },
+                    }
                 }
 
                 bytes
-            },
+            }
 
-            Instruction::JUMP { destination } => {
+            Instruction::Jump { destination } => {
                 let mut b = vec![];
 
                 b.append(&mut (destination as u32).to_le_bytes().to_vec());
 
                 b
-            },
+            }
 
-            Instruction::JUMPC { destination, conditional_address } => {
+            Instruction::JumpC {
+                destination,
+                conditional_address,
+            } => {
                 let mut b = vec![];
 
                 b.append(&mut (destination as u32).to_le_bytes().to_vec());
@@ -227,9 +260,9 @@ impl Into<Vec<u8>> for Instruction {
                 b.append(&mut conditional_address.as_bytes().to_vec());
 
                 b
-            },
+            }
 
-            Instruction::INTERRUPT { interrupt } => {
+            Instruction::Interrupt { interrupt } => {
                 let mut b = vec![];
 
                 b.push(interrupt.kind.into());
@@ -238,9 +271,40 @@ impl Into<Vec<u8>> for Instruction {
                 b.append(&mut interrupt.address.as_bytes().to_vec());
 
                 b
-            },
+            }
 
-            _ => vec![],
+            Instruction::Call { address } => {
+                let mut b = vec![];
+                b.append(&mut (address as u32).to_le_bytes().to_vec());
+                b
+            }
+
+            Instruction::Return => vec![],
+
+            Instruction::StoreLocal { name, register } => {
+                let mut b = vec![];
+                b.push(name.len() as u8);
+                b.append(&mut name.as_bytes().to_vec());
+                b.push(register.len() as u8);
+                b.append(&mut register.as_bytes().to_vec());
+                b
+            }
+
+            Instruction::LoadLocal { name, register } => {
+                let mut b = vec![];
+                b.push(name.len() as u8);
+                b.append(&mut name.as_bytes().to_vec());
+                b.push(register.len() as u8);
+                b.append(&mut register.as_bytes().to_vec());
+                b
+            }
+
+            Instruction::Dispatch { method_name } => {
+                let mut b = vec![];
+                b.push(method_name.len() as u8);
+                b.append(&mut method_name.as_bytes().to_vec());
+                b
+            }
         };
 
         bytes.append(&mut data);

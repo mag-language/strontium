@@ -1,8 +1,5 @@
-use crate::machine::{
-    Executor,
-    Strontium,
-    StrontiumError, StackFrame,
-};
+use crate::machine::register::RegisterValue;
+use crate::machine::{Executor, StackFrame, Strontium, StrontiumError};
 
 use crate::Instruction;
 
@@ -18,13 +15,24 @@ impl Executor for CallExecutor {
         }
         let instruction = machine.parse_instruction()?;
 
-        if let Instruction::CALL { address } = instruction {
-            let return_address = machine.ip;
+        if let Instruction::Call { address } = instruction {
+            // Save caller's temporary registers to protect from callee clobbering
+            let mut saved_registers: HashMap<String, RegisterValue> = HashMap::new();
+            for (name, value) in machine.registers.registers.iter() {
+                if name.starts_with('r') && name[1..].parse::<u32>().is_ok() {
+                    saved_registers.insert(name.clone(), value.clone());
+                }
+            }
+
+            // Save current position as return address
+            let return_address = machine.bytecode_parser.index;
             machine.call_stack.push(StackFrame {
                 return_address,
                 local_variables: HashMap::new(),
+                saved_registers,
             });
-            machine.ip = address;
+            // Jump to method body
+            machine.bytecode_parser.index = address;
         }
 
         Ok(true)

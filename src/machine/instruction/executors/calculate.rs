@@ -1,11 +1,7 @@
-use crate::machine::{
-    Executor,
-    Strontium,
-    StrontiumError,
-};
+use crate::machine::{Executor, Strontium, StrontiumError};
 
-use crate::Instruction;
 use super::super::CalculationMethod;
+use crate::Instruction;
 
 /// Perform a calculation two registers and write the result to a third.
 #[derive(Debug, Clone, PartialEq)]
@@ -18,7 +14,13 @@ impl Executor for CalculateExecutor {
         }
         let instruction = machine.parse_instruction()?;
 
-        if let Instruction::CALCULATE { method, operand1, operand2, destination } = instruction {
+        if let Instruction::Calculate {
+            method,
+            operand1,
+            operand2,
+            destination,
+        } = instruction
+        {
             let op1 = machine.registers.get(&operand1);
             let op2 = machine.registers.get(&operand2);
 
@@ -28,10 +30,10 @@ impl Executor for CalculateExecutor {
                     CalculationMethod::SUBTRACT => op1.clone() - op2.clone(),
                     CalculationMethod::MULTIPLY => op1.clone() * op2.clone(),
                     CalculationMethod::DIVIDE => op1.clone() / op2.clone(),
-/*
-                    CalculationMethod::Modulo => op1 % op2,
-                    CalculationMethod::Power => op1.pow(op2),
-*/
+                    /*
+                                        CalculationMethod::Modulo => op1 % op2,
+                                        CalculationMethod::Power => op1.pow(op2),
+                    */
                     _ => unimplemented!(),
                 };
 

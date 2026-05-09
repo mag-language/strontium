@@ -22,9 +22,9 @@
 //!
 //! This will load both numbers into registers `r1` and `r2`, add them together and store the
 //! result in register `r3`. Finally, the result is printed to standard output.
-pub mod types;
 pub mod machine;
+pub mod types;
 // pub mod repl;
 
-pub use self::machine::Strontium;
 pub use self::machine::instruction::Instruction;
+pub use self::machine::Strontium;

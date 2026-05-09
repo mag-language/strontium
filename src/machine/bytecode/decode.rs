@@ -1,10 +1,4 @@
-use super::{
-    BytecodeError,
-    Instruction,
-    Opcode,
-    RegisterValue,
-    BitwiseMethod,
-};
+use super::{BitwiseMethod, BytecodeError, Instruction, Opcode, RegisterValue};
 
 use crate::machine::Interrupt;
 
@@ -67,14 +61,16 @@ impl BytecodeParser {
             if self.debug {
                 println!("End: {}", end);
             }
-            Ok(self.bytecode[start .. end].to_vec())
+            Ok(self.bytecode[start..end].to_vec())
         }
     }
 
     fn consume_byte(&mut self) -> u8 {
         let byte = self.peek();
 
-        if !self.eof() { self.advance().unwrap() };
+        if !self.eof() {
+            self.advance().unwrap()
+        };
 
         byte
     }
@@ -102,7 +98,7 @@ impl BytecodeParser {
             return Err(BytecodeError::UnexpectedEof(self.index as u32));
         }
 
-        let actual = &self.bytecode[self.index .. end_index];
+        let actual = &self.bytecode[self.index..end_index];
 
         if actual.to_vec() == expected.as_slice() {
             self.index = end_index;
@@ -124,13 +120,16 @@ impl BytecodeParser {
     }
 
     pub fn values_to_bytes(&self, values: Vec<RegisterValue>) -> Vec<u8> {
-        values.iter().filter_map(|val| {
-            if let RegisterValue::UInt8(byte) = val {
-                Some(*byte)
-            } else {
-                None // Or handle differently, maybe even panic if you expect only UInt8 values.
-            }
-        }).collect()
+        values
+            .iter()
+            .filter_map(|val| {
+                if let RegisterValue::UInt8(byte) = val {
+                    Some(*byte)
+                } else {
+                    None // Or handle differently, maybe even panic if you expect only UInt8 values.
+                }
+            })
+            .collect()
     }
 
     pub fn parse_instruction(&mut self) -> Result<Instruction, BytecodeError> {
@@ -142,33 +141,45 @@ impl BytecodeParser {
         self.advance()?;
 
         let instruction = match opcode {
-            Opcode::HALT =>  {
-                if self.debug { println!(":: HALT"); }
+            Opcode::Halt => {
+                if self.debug {
+                    println!(":: HALT");
+                }
                 self.expect_bytes(vec![0, 0, 0, 0, 0, 0, 0])?;
-                Instruction::HALT
-            },
+                Instruction::Halt
+            }
 
-            Opcode::LOAD => {
-                if self.debug { println!(":: LOAD"); }
+            Opcode::Load => {
+                if self.debug {
+                    println!(":: LOAD");
+                }
                 let register = self.consume_string()?;
-                if self.debug { println!("Decoded register {}, index {}", register, self.index); }
+                if self.debug {
+                    println!("Decoded register {}, index {}", register, self.index);
+                }
                 let value_len = self.consume_byte();
-                if self.debug { println!("Decoded value length {}, index {}, parsing register value", value_len, self.index); }
+                if self.debug {
+                    println!(
+                        "Decoded value length {}, index {}, parsing register value",
+                        value_len, self.index
+                    );
+                }
 
                 let consumed = self.consume_n_bytes(value_len as usize)?.to_vec();
 
-                if self.debug { println!("consumed: {:?}", consumed); }
+                if self.debug {
+                    println!("consumed: {:?}", consumed);
+                }
 
                 let value = RegisterValue::try_from(consumed).unwrap();
 
-                Instruction::LOAD {
-                    value,
-                    register,
-                }
-            },
+                Instruction::Load { value, register }
+            }
 
-            Opcode::MOVE | Opcode::COPY => {
-                if self.debug { println!(":: MOVE/COPY"); }
+            Opcode::Move | Opcode::Copy => {
+                if self.debug {
+                    println!(":: MOVE/COPY");
+                }
                 let source_len = self.peek();
                 self.advance()?;
                 let source = self.consume_n_bytes(source_len as usize)?;
@@ -178,36 +189,42 @@ impl BytecodeParser {
                 let destination = self.consume_n_bytes(dest_len as usize)?;
 
                 match opcode {
-                    Opcode::MOVE => Instruction::MOVE {
+                    Opcode::Move => Instruction::Move {
                         source: String::from_utf8(source.to_vec()).unwrap(),
                         destination: String::from_utf8(destination.to_vec()).unwrap(),
                     },
-                    Opcode::COPY => Instruction::COPY {
+                    Opcode::Copy => Instruction::Copy {
                         source: String::from_utf8(source.to_vec()).unwrap(),
                         destination: String::from_utf8(destination.to_vec()).unwrap(),
                     },
                     _ => unreachable!(),
                 }
-            },
+            }
 
-            Opcode::PUSH => {
-                if self.debug { println!(":: PUSH"); }
+            Opcode::Push => {
+                if self.debug {
+                    println!(":: PUSH");
+                }
                 let destination_len = self.peek();
                 self.advance()?;
                 let destination = self.consume_n_bytes(destination_len as usize)?;
 
                 let value_len = self.peek();
                 self.advance()?;
-                let value = RegisterValue::try_from(self.consume_n_bytes(value_len as usize)?.to_vec()).unwrap();
+                let value =
+                    RegisterValue::try_from(self.consume_n_bytes(value_len as usize)?.to_vec())
+                        .unwrap();
 
-                Instruction::PUSH {
+                Instruction::Push {
                     destination: String::from_utf8(destination.to_vec()).unwrap(),
                     value,
                 }
-            },
+            }
 
-            Opcode::APPEND => {
-                if self.debug { println!(":: APPEND"); }
+            Opcode::Append => {
+                if self.debug {
+                    println!(":: APPEND");
+                }
                 let destination_len = self.peek();
                 self.advance()?;
                 let destination = self.consume_n_bytes(destination_len as usize)?;
@@ -217,32 +234,38 @@ impl BytecodeParser {
                 while !self.eof() {
                     let value_len = self.peek();
                     self.advance()?;
-                    let value = RegisterValue::try_from(self.consume_n_bytes(value_len as usize)?.to_vec()).unwrap();
+                    let value =
+                        RegisterValue::try_from(self.consume_n_bytes(value_len as usize)?.to_vec())
+                            .unwrap();
 
                     values.push(value);
                 }
 
-                Instruction::APPEND {
+                Instruction::Append {
                     destination: String::from_utf8(destination.to_vec()).unwrap(),
                     value: values,
                 }
-            },
+            }
 
-            Opcode::INTERRUPT => {
-                if self.debug { println!(":: INTERRUPT"); }
+            Opcode::Interrupt => {
+                if self.debug {
+                    println!(":: INTERRUPT");
+                }
                 let interrupt = self.consume_byte();
                 let address = self.consume_string();
 
-                Instruction::INTERRUPT {
+                Instruction::Interrupt {
                     interrupt: Interrupt {
                         address: address?,
                         kind: interrupt.into(),
                     },
                 }
-            },
+            }
 
-            Opcode::CALCULATE => {
-                if self.debug { println!(":: CALCULATE"); }
+            Opcode::Calculate => {
+                if self.debug {
+                    println!(":: CALCULATE");
+                }
                 let method = self.peek();
                 self.advance()?;
 
@@ -258,16 +281,18 @@ impl BytecodeParser {
                 self.advance()?;
                 let destination = self.consume_n_bytes(destination_len as usize)?;
 
-                Instruction::CALCULATE {
+                Instruction::Calculate {
                     method: method.into(),
                     operand1: String::from_utf8(operand1.to_vec()).unwrap(),
                     operand2: String::from_utf8(operand2.to_vec()).unwrap(),
                     destination: String::from_utf8(destination.to_vec()).unwrap(),
                 }
-            },
+            }
 
-            Opcode::COMPARE => {
-                if self.debug { println!(":: COMPARE"); }
+            Opcode::Compare => {
+                if self.debug {
+                    println!(":: COMPARE");
+                }
                 let method = self.peek();
                 self.advance()?;
 
@@ -283,46 +308,39 @@ impl BytecodeParser {
                 self.advance()?;
                 let destination = self.consume_n_bytes(destination_len as usize)?;
 
-                Instruction::COMPARE {
+                Instruction::Compare {
                     method: method.into(),
                     operand1: String::from_utf8(operand1.to_vec()).unwrap(),
                     operand2: String::from_utf8(operand2.to_vec()).unwrap(),
                     destination: String::from_utf8(destination.to_vec()).unwrap(),
                 }
-            },
+            }
 
-            Opcode::BITWISE => {
-                if self.debug { println!(":: BITWISE"); }
+            Opcode::Bitwise => {
+                if self.debug {
+                    println!(":: BITWISE");
+                }
                 let method_byte = self.consume_byte();
 
                 let method = match method_byte {
                     0 | 1 | 2 => {
-                        let a   = self.consume_string()?;
-                        let b   = self.consume_string()?;
+                        let a = self.consume_string()?;
+                        let b = self.consume_string()?;
                         let out = self.consume_string()?;
 
                         match method_byte {
-                            0 => Ok(BitwiseMethod::AND {
-                                a,
-                                b,
-                                out,
-                            }),
-                            1 => Ok(BitwiseMethod::OR {
-                                a,
-                                b,
-                                out,
-                            }),
-                            2 => Ok(BitwiseMethod::XOR {
-                                a,
-                                b,
-                                out,
-                            }),
+                            0 => Ok(BitwiseMethod::AND { a, b, out }),
+                            1 => Ok(BitwiseMethod::OR { a, b, out }),
+                            2 => Ok(BitwiseMethod::XOR { a, b, out }),
                             _ => unreachable!(),
                         }
-                    },
-                    3 => Ok(BitwiseMethod::NOT { a: String::new(), out: String::new() }),
+                    }
+                    3 => Ok(BitwiseMethod::NOT {
+                        a: String::new(),
+                        out: String::new(),
+                    }),
                     4 | 5 => {
-                        let a   = self.consume_string()?;
+                        let a = self.consume_string()?;
                         let out = self.consume_string()?;
                         let amount = self.consume_byte();
 
@@ -339,34 +357,75 @@ impl BytecodeParser {
                             }),
                             _ => unreachable!(),
                         }
-                    },
+                    }
                     _ => Err(BytecodeError::InvalidOpcode(method_byte)),
                 };
 
-                Instruction::BITWISE {
-                    method: method?,
-                }
-            },
+                Instruction::Bitwise { method: method? }
+            }
 
-            Opcode::JUMP => {
-                if self.debug { println!(":: JUMP"); }
-                let destination = self.consume_u32()?;
-            
-                Instruction::JUMP {
-                    destination,
+            Opcode::Jump => {
+                if self.debug {
+                    println!(":: JUMP");
                 }
-            },
-            
-            Opcode::JUMPC => {
-                if self.debug { println!(":: JUMPC"); }
+                let destination = self.consume_u32()?;
+
+                Instruction::Jump { destination }
+            }
+
+            Opcode::JumpC => {
+                if self.debug {
+                    println!(":: JUMPC");
+                }
                 let destination = self.consume_u32()?;
                 let conditional_address = self.consume_string()?;
-            
-                Instruction::JUMPC {
+
+                Instruction::JumpC {
                     destination,
                     conditional_address,
                 }
-            },
+            }
+
+            Opcode::Call => {
+                if self.debug {
+                    println!(":: CALL");
+                }
+                let address = self.consume_u32()? as usize;
+                Instruction::Call { address }
+            }
+
+            Opcode::Return => {
+                if self.debug {
+                    println!(":: RETURN");
+                }
+                Instruction::Return
+            }
+
+            Opcode::StoreLocal => {
+                if self.debug {
+                    println!(":: StoreLocal");
+                }
+                let name = self.consume_string()?;
+                let register = self.consume_string()?;
+                Instruction::StoreLocal { name, register }
+            }
+
+            Opcode::LoadLocal => {
+                if self.debug {
+                    println!(":: LoadLocal");
+                }
+                let name = self.consume_string()?;
+                let register = self.consume_string()?;
+                Instruction::LoadLocal { name, register }
+            }
+
+            Opcode::Dispatch => {
+                if self.debug {
+                    println!(":: DISPATCH");
+                }
+                let method_name = self.consume_string()?;
+                Instruction::Dispatch { method_name }
+            }
 
             _ => return Err(BytecodeError::InvalidOpcode(opcode as u8)),
         };

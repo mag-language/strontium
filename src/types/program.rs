@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -20,19 +20,12 @@ pub struct Constants {
 
 impl Constants {
     pub fn new(constants: Vec<(String, Constant)>) -> Self {
-        Self {
-            constants,
-        }
+        Self { constants }
     }
 }
 
 impl Program {
-    pub fn new(
-        version: u8,
-        constants: Constants,
-        bytecode: Vec<u8>,
-    ) -> Self {
-
+    pub fn new(version: u8, constants: Constants, bytecode: Vec<u8>) -> Self {
         Self {
             version,
             constants,
@@ -52,30 +45,29 @@ impl Program {
     }
 
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, BytecodeError> {
-        println!("{}", String::from_utf8_lossy(&bytes[0 .. 9]));
-        if "strontium".to_string() == String::from_utf8_lossy(&bytes[0 .. 9]) {
+        println!("{}", String::from_utf8_lossy(&bytes[0..9]));
+        if "strontium".to_string() == String::from_utf8_lossy(&bytes[0..9]) {
             // Decode a [Program] from the remaining bytes after the signature string.
-            Ok(bincode::deserialize(&bytes[9 .. bytes.len()]).unwrap())
+            Ok(bincode::deserialize(&bytes[9..bytes.len()]).unwrap())
         } else {
             Err(BytecodeError::NoSignatureFound)
         }
     }
 
-    pub fn save(&self, path: String)-> std::io::Result<()> {
+    pub fn save(&self, path: String) -> std::io::Result<()> {
         let mut file = File::create(path)?;
         file.write_all(&self.to_bytes())?;
         Ok(())
     }
 
-
-    pub fn open(&self, path: String)-> std::io::Result<Self> {
+    pub fn open(&self, path: String) -> std::io::Result<Self> {
         let file = File::open(path)?;
         let mut reader = BufReader::new(file);
         let mut buffer = Vec::new();
-    
+
         // Read file into vector.
         reader.read_to_end(&mut buffer)?;
-        
+
         Ok(Self::from_bytes(&buffer[..]).unwrap())
     }
 }
@@ -116,30 +108,24 @@ pub enum Constant {
 
 #[cfg(test)]
 mod tests {
-	use super::*;
+    use super::*;
 
     #[test]
     fn serialize_deserialize() {
- 		let program = Program::new(
+        let program = Program::new(
             14,
-            Constants::new(
-                vec![
-                    ("pi".to_string(), Constant::Float32(3.14159265358)),
-                ]
-            ),
+            Constants::new(vec![("pi".to_string(), Constant::Float32(3.14159265358))]),
             vec![],
         );
 
         let encoded = program.to_bytes();
         let decoded = Program::from_bytes(&encoded[..]).unwrap();
 
- 		assert_eq!(
+        assert_eq!(
             decoded,
             Program::new(
                 14,
-                Constants::new(vec![
-                    ("pi".to_string(), Constant::Float32(3.14159265358)),
-                ]),
+                Constants::new(vec![("pi".to_string(), Constant::Float32(3.14159265358)),]),
                 vec![],
             ),
         );

@@ -1,8 +1,4 @@
-use crate::machine::{
-    Executor,
-    Strontium,
-    StrontiumError,
-};
+use crate::machine::{Executor, Strontium, StrontiumError};
 
 use crate::Instruction;
 
@@ -20,7 +16,7 @@ impl Executor for LoadExecutor {
         }
         let instruction = machine.parse_instruction()?;
 
-        if let Instruction::LOAD { value, register } = instruction {
+        if let Instruction::Load { value, register } = instruction {
             machine.registers.set(&register, value);
         }
 

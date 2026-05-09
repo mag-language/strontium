@@ -1,6 +1,7 @@
+use super::super::InterruptKind;
+use crate::machine::register::RegisterValue;
 use crate::machine::{Executor, Strontium, StrontiumError};
 use crate::Instruction;
-use super::super::InterruptKind;
 
 /// Attend to an event that needs immediate attention.
 #[derive(Debug, Clone, PartialEq)]
@@ -17,7 +18,7 @@ impl Executor for InterruptExecutor {
         if machine.debug {
             println!("INTERRUPT :: Parsed expression");
         }
-        if let Instruction::INTERRUPT { interrupt } = instruction {
+        if let Instruction::Interrupt { interrupt } = instruction {
             match interrupt.kind {
                 InterruptKind::Print => {
                     if machine.debug {
@@ -25,13 +26,15 @@ impl Executor for InterruptExecutor {
                     }
                     let value = machine.registers.get(&interrupt.address);
                     if let Some(value) = value {
-                        println!("{}", value);
+                        if !matches!(value, RegisterValue::Empty) {
+                            println!("{}", value);
+                        }
                     } else {
                         println!("Invalid register address: {}", interrupt.address);
                     }
-                },
+                }
 
-                _ => {},
+                _ => {}
             }
         }
 
