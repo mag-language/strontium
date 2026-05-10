@@ -27,6 +27,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Update outdated unreleased diff link.
 -->
 
+## [0.8.0] - May 10, 2026
+
+### Added
+
+- `DispatchPattern::Type(RegisterType)` variant for type-based multimethod dispatch — methods annotated with a type (e.g. `def foo(n Int)`) now generate a type-matching pattern instead of a wildcard, allowing multiple methods with the same name but different argument types to coexist correctly.
+- `JumpCExecutor`: executes `JumpC` by jumping to the destination when the conditional register holds `Boolean(false)`, enabling compiled `if/then/else` branches.
+- `CancellationToken`: shared atomic flag allowing embedders to interrupt VM execution mid-run (used by the REPL to handle Ctrl-C).
+
+### Fixed
+
+- Boolean values were encoded with type tag `4`, colliding with `Int32` (tag `4`). The encoder now uses the correct tag `13`, matching the decoder.
+
 ## [0.7.0] - May 9, 2026
 
 ### Added

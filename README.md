@@ -3,56 +3,54 @@
 
 # Introduction
 
-Strontium is a bytecode machine with typed registers and multimethods for statically and dynamically typed programming languages.
+Strontium is a register-based bytecode virtual machine with typed registers and multimethod dispatch, built to power the [Mag](https://github.com/mag-language) programming language.
 
-It is built primarily to support [Mag](https://github.com/mag-language) as the underlying, executive portion of the language engine. Any Mag source code first runs through the parser, is then compiled to Strontium bytecode and finally interpreted by this virtual machine.
-
-## Instruction Set Architecture
-
-A lightweight RISC-like instruction set architecture is used to keep the number of instructions small and easily maintainable, while more complex tasks are achieved using combinations of multiple bytecode instructions.
+Mag source code is parsed and compiled to Strontium bytecode by `magc`, then executed here.
 
 ## Registers
 
 The following registers are pre-allocated when the machine starts:
 
-|**Register**|**Type**|**Content**|**Description**
-| -------- | ---------- | ------ | --------------
-| `ip` 		 |`UInt64`| `0` | The index of the byte to be read next from the bytecode buffer in the `bc` register.
-| `bc`       |`Array<UInt8>`| `[]`|The bytecode of the running program.
-|`r1..r8`  |`Empty`| | General purpose registers
-
-Use the `LOAD` instruction to load values from bytecode into general purpose registers at runtime.
+| **Register** | **Type**       | **Content** | **Description**                                          |
+| ------------ | -------------- | ----------- | -------------------------------------------------------- |
+| `bc`         | `Array<UInt8>` | `[]`        | Bytecode of the running program.                         |
+| `arg`        | any            |             | Argument register for multimethod dispatch.              |
+| `ret`        | any            |             | Return value register for method calls.                  |
+| `r1..r8`     | `Empty`        |             | General-purpose registers, allocated as needed.          |
 
 ## Instruction Set
 
-The following instructions may then used in program bytecode to operate on the registers:
+| **Opcode** | **Name**      | **Description**                                                                                      |
+| ---------- | ------------- | ---------------------------------------------------------------------------------------------------- |
+| 0          | `HALT`        | Stop execution.                                                                                      |
+| 1          | `LOAD`        | Load a literal value into a register.                                                                |
+| 2          | `MOVE`        | Move a value from one register to another (source is cleared).                                       |
+| 3          | `COPY`        | Copy a value from one register to another (source is unchanged).                                     |
+| 4          | `CALCULATE`   | Arithmetic on two registers (`ADD`, `SUBTRACT`, `MULTIPLY`, `DIVIDE`, `MODULO`, `POWER`, `SQRT`).   |
+| 5          | `COMPARE`     | Comparison on two registers (`EQ`, `NEQ`, `LT`, `LTE`, `GT`, `GTE`); result written to a third.     |
+| 6          | `BITWISE`     | Bitwise operation (`AND`, `OR`, `XOR`, `NOT`, `LSH`, `RSH`).                                        |
+| 7          | `JUMP`        | Set the program counter to an absolute byte address.                                                 |
+| 8          | `JUMPC`       | Conditional jump: jumps when the register at `conditional_address` holds `Boolean(false)`.           |
+| 9          | `INTERRUPT`   | Emit a VM interrupt (`PRINT`, `READ`).                                                               |
+| 10         | `CALL`        | Call a method at an absolute byte address, pushing a new stack frame.                                |
+| 11         | `RETURN`      | Return from a method call, restoring the previous stack frame.                                       |
+| 14         | `STOREL`      | Store a register value into the current stack frame's local variables.                               |
+| 15         | `LOADL`       | Load a value from the current stack frame's local variables into a register.                         |
+| 16         | `DISPATCH`    | Multimethod dispatch: match the value in `arg` against registered patterns and jump to the match.    |
 
-|**Opcode**| **Name**     | **Description**
-| -------- | --------------- | ----------------------------
-|  0  | `HALT` 		 | Stop all execution instantly.
-|  1  | `LOAD`      	 | Load a `Value` from program bytecode into a register.
-|  2  | `MOVE` 		 | Move a value from one register to another. The source register will be cleared after the operation.
-|  3  | `COPY` 		 | Copy a value from one register to another. The source will be left untouched.
-|  4  | `CALCULATE` 	 | Perform a calculation (`ADD`, `SUBTRACT`, `MULTIPLY`, `DIVIDE`) on two registers and write the result to a third. 
-|  5  | `COMPARE` 	     | Perform a comparison (`EQ`, `NEQ`, `LT`, `LTE`, `GT`, `GTE`) on two registers and write the result to a third.
-|  6  | `BITWISE` 	     | Perform a bitwise operation on one (`NOT`) or two (`AND`, `OR`, `XOR`, `LSH`, `RSH`) registers and write the result into another.
-|  7  | `JUMP` 	     | Set the program counter to a value from a location, using one of the methods (`absolute`, `forward`, `backward`)
-|  8  | `JUMPC` 	     | Same as the previous instruction, but with an additional register address argument. Will only perform the jump if the given register contains a `Value::Bool(true)`.
-|  9  | `INTERRUPT` 	 | Emit an event that needs immediate attention (`READ`, `PRINT`)
-|  10 | `CALL` 	 | *Unimplemented method call instruction*
-|  11 | `RETURN` | *Unimplemented method return instruction*
+## Multimethod Dispatch
 
-This README will soon be updated with further documentation.
+Methods are registered in a dispatch table keyed by name. Each entry carries a `DispatchPattern`:
+
+- `Value(v)` — matches a specific value (e.g. `0` for `fib(0)`), precedence 3
+- `Type(t)` — matches any value of a given type (e.g. `Int` for `def foo(n Int)`), precedence 2
+- `Any` — matches anything (untyped variable pattern), precedence 1
+
+The first pattern with the highest precedence that matches the argument wins.
 
 # Project Status
 
-**_This is still very much in the alpha phase, so the semantics and API surface of this library will change dynamically over time. Do not rely on this in any production-critical way and expect earth-shattering change._**
-
-Let's talk if you're interested on working on this project!
-
-# Tests
-
-*Coming soon*
+**_Alpha — API and semantics will change. Not suitable for production use._**
 
 # License
 
