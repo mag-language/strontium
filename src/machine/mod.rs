@@ -12,27 +12,13 @@ use self::register::{RegisterValue, Registers};
 use self::bytecode::decode::BytecodeParser;
 use crate::types::StrontiumError;
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::convert::TryInto;
 use std::rc::Rc;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
-
-use self::instruction::DispatchPattern;
-
-/// An entry in the multimethod dispatch table.
-#[derive(Debug, Clone)]
-pub struct DispatchEntry {
-    /// The pattern to match against the argument.
-    pub pattern: DispatchPattern,
-    /// The bytecode address to jump to if this pattern matches.
-    pub address: usize,
-}
-
-/// Maps method names to their dispatch entries (sorted by precedence, highest first).
-pub type MultimethodTable = BTreeMap<String, Vec<DispatchEntry>>;
 
 /// Shared cancellation state used by embedders to interrupt VM execution.
 #[derive(Debug, Clone, Default)]
@@ -77,8 +63,6 @@ pub struct Strontium {
     pub ip: usize,
     pub bytecode_parser: BytecodeParser,
     should_continue: bool,
-    /// Maps method names to dispatch entries for runtime multimethod dispatch.
-    pub multimethod_table: MultimethodTable,
     pub call_stack: Vec<StackFrame>,
     /// Whether to print debug output during execution.
     pub debug: bool,
@@ -101,7 +85,7 @@ impl Strontium {
         executors.insert(Opcode::Jump, Rc::new(JumpExecutor));
         executors.insert(Opcode::JumpC, Rc::new(JumpCExecutor));
         executors.insert(Opcode::Copy, Rc::new(CopyExecutor));
-        executors.insert(Opcode::Dispatch, Rc::new(DispatchExecutor));
+        executors.insert(Opcode::LoadType, Rc::new(LoadTypeExecutor));
 
         let registers = Registers::new();
 
@@ -111,38 +95,9 @@ impl Strontium {
             ip: 0,
             bytecode_parser: BytecodeParser::new(vec![], debug),
             should_continue: true,
-            multimethod_table: BTreeMap::new(),
             call_stack: vec![],
             debug,
         }
-    }
-
-    /// Register a method variant in the dispatch table.
-    /// Entries are kept sorted by precedence (highest first).
-    pub fn register_method(&mut self, name: String, pattern: DispatchPattern, address: usize) {
-        let entry = DispatchEntry { pattern, address };
-        let entries = self.multimethod_table.entry(name).or_insert_with(Vec::new);
-
-        // Insert in precedence order (highest first)
-        let precedence = entry.pattern.precedence();
-        let pos = entries
-            .iter()
-            .position(|e| e.pattern.precedence() < precedence)
-            .unwrap_or(entries.len());
-        entries.insert(pos, entry);
-    }
-
-    /// Dispatch a method call based on the argument value.
-    /// Returns the bytecode address of the matching method, or None if no match.
-    pub fn dispatch(&self, name: &str, arg: &RegisterValue) -> Option<usize> {
-        if let Some(entries) = self.multimethod_table.get(name) {
-            for entry in entries {
-                if entry.pattern.matches(arg) {
-                    return Some(entry.address);
-                }
-            }
-        }
-        None
     }
 
     /// Reset the VM state for a new execution.

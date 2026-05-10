@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 use super::{RegisterValue, Strontium};
-use super::register::RegisterType;
 use crate::machine::opcode::Opcode;
 use crate::types::StrontiumError;
 
@@ -12,36 +11,6 @@ pub trait Executor {
     fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError>;
 }
 
-/// A pattern for multimethod dispatch - either a specific value, a type match, or a wildcard.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum DispatchPattern {
-    /// Match a specific value (e.g., Int64(0) for fib(0))
-    Value(RegisterValue),
-    /// Match any value of a specific type (e.g., Int64 for def foo(n Int))
-    Type(RegisterType),
-    /// Match any value (variable pattern with no type annotation)
-    Any,
-}
-
-impl DispatchPattern {
-    /// Check if this pattern matches the given value.
-    pub fn matches(&self, value: &RegisterValue) -> bool {
-        match self {
-            DispatchPattern::Value(v) => v == value,
-            DispatchPattern::Type(t) => value.get_type() == *t,
-            DispatchPattern::Any => true,
-        }
-    }
-
-    /// Get the precedence of this pattern (higher = more specific).
-    pub fn precedence(&self) -> usize {
-        match self {
-            DispatchPattern::Value(_) => 3,
-            DispatchPattern::Type(_) => 2,
-            DispatchPattern::Any => 1,
-        }
-    }
-}
 
 /// A signal indicating that an event needs immediate attention. This enumeration
 /// contains the interrupt types supported by the virtual machine.
@@ -157,19 +126,6 @@ pub enum Instruction {
     Interrupt {
         interrupt: Interrupt,
     },
-    /*
-        /// Define a function and add it to the dispatch table.
-        DEF {
-            /// The name of the multimethod implementation.
-            name: String,
-            /// A pair, tuple, record or value type descriptor as a single argument.
-            arg_type: String,
-            /// The return type of the function.
-            return_type: String,
-            /// The position in the bytecode buffer where the function starts.
-            bytecode_start: usize,
-        },
-    */
     Call {
         /// The address to jump to (the start of the method body).
         address: usize,
@@ -193,11 +149,10 @@ pub enum Instruction {
         register: String,
     },
 
-    /// Dispatch a multimethod call based on runtime argument value.
-    /// Reads `arg` register, matches against dispatch table, jumps to winner.
-    Dispatch {
-        /// The name of the multimethod to dispatch.
-        method_name: String,
+    /// Load the runtime type tag of a register's value into another register as Int64.
+    LoadType {
+        source: String,
+        destination: String,
     },
 
     // Compile-time-only pseudo-instructions. These are resolved to real instructions
@@ -205,6 +160,8 @@ pub enum Instruction {
     LabelTarget { id: usize },
     JumpToLabel { id: usize },
     JumpCToLabel { id: usize, conditional_address: String },
+    /// Call a named dispatch shim; resolved to Call { address } during linking.
+    CallShim { method_name: String },
 }
 
 impl Instruction {
@@ -226,10 +183,11 @@ impl Instruction {
             Instruction::Append { .. } => Opcode::Append,
             Instruction::StoreLocal { .. } => Opcode::StoreLocal,
             Instruction::LoadLocal { .. } => Opcode::LoadLocal,
-            Instruction::Dispatch { .. } => Opcode::Dispatch,
+            Instruction::LoadType { .. } => Opcode::LoadType,
             Instruction::LabelTarget { .. }
             | Instruction::JumpToLabel { .. }
-            | Instruction::JumpCToLabel { .. } => {
+            | Instruction::JumpCToLabel { .. }
+            | Instruction::CallShim { .. } => {
                 unreachable!("compile-time pseudo-instruction reached get_opcode")
             }
         }
@@ -252,6 +210,7 @@ pub enum CalculationMethod {
     POWER,
     MODULO,
     SQRT,
+    CONCAT,
 }
 
 impl Into<u8> for CalculationMethod {
@@ -264,6 +223,7 @@ impl Into<u8> for CalculationMethod {
             CalculationMethod::POWER => 4,
             CalculationMethod::MODULO => 5,
             CalculationMethod::SQRT => 6,
+            CalculationMethod::CONCAT => 7,
         }
     }
 }
@@ -278,6 +238,7 @@ impl From<u8> for CalculationMethod {
             4 => CalculationMethod::POWER,
             5 => CalculationMethod::MODULO,
             6 => CalculationMethod::SQRT,
+            7 => CalculationMethod::CONCAT,
             _ => unreachable!(),
         }
     }

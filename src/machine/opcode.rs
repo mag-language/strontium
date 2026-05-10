@@ -46,9 +46,8 @@ pub enum Opcode {
     StoreLocal,
     /// Load a value from the current stack frame's local variables into a register.
     LoadLocal,
-    /// Dispatch a multimethod call based on runtime argument value.
-    /// Reads from `arg` register, matches against patterns, jumps to matching method.
-    Dispatch,
+    /// Load the runtime type tag of a register's value into another register as Int64.
+    LoadType,
     /// An invalid opcode.
     Illegal,
 }
@@ -72,7 +71,7 @@ impl From<u8> for Opcode {
             13 => Append,
             14 => StoreLocal,
             15 => LoadLocal,
-            16 => Dispatch,
+            16 => LoadType,
 
             _ => Illegal,
         }
@@ -98,7 +97,7 @@ impl Into<u8> for Opcode {
             Append => 13,
             StoreLocal => 14,
             LoadLocal => 15,
-            Dispatch => 16,
+            LoadType => 16,
 
             Illegal => 255,
         }

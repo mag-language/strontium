@@ -21,7 +21,6 @@ pub enum StrontiumError {
     RegisterNotFound(String),
     /// A local variable with the given name was not found in the current stack frame.
     LocalVariableNotFound(String),
-    /// No matching method was found in the dispatch table.
     MethodNotFound(String),
     /// Execution was cancelled by the embedding runtime.
     Interrupted,

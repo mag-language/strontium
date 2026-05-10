@@ -419,12 +419,13 @@ impl BytecodeParser {
                 Instruction::LoadLocal { name, register }
             }
 
-            Opcode::Dispatch => {
+            Opcode::LoadType => {
                 if self.debug {
-                    println!(":: DISPATCH");
+                    println!(":: LOADTYPE");
                 }
-                let method_name = self.consume_string()?;
-                Instruction::Dispatch { method_name }
+                let source = self.consume_string()?;
+                let destination = self.consume_string()?;
+                Instruction::LoadType { source, destination }
             }
 
             _ => return Err(BytecodeError::InvalidOpcode(opcode as u8)),

@@ -299,16 +299,19 @@ impl Into<Vec<u8>> for Instruction {
                 b
             }
 
-            Instruction::Dispatch { method_name } => {
+            Instruction::LoadType { source, destination } => {
                 let mut b = vec![];
-                b.push(method_name.len() as u8);
-                b.append(&mut method_name.as_bytes().to_vec());
+                b.push(source.len() as u8);
+                b.extend_from_slice(source.as_bytes());
+                b.push(destination.len() as u8);
+                b.extend_from_slice(destination.as_bytes());
                 b
             }
 
             Instruction::LabelTarget { .. }
             | Instruction::JumpToLabel { .. }
-            | Instruction::JumpCToLabel { .. } => {
+            | Instruction::JumpCToLabel { .. }
+            | Instruction::CallShim { .. } => {
                 panic!("compile-time pseudo-instruction reached encoding stage")
             }
         };

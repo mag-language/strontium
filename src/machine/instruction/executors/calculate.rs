@@ -42,6 +42,12 @@ impl Executor for CalculateExecutor {
                         RegisterValue::Float32(a) => RegisterValue::Float32(a.sqrt()),
                         _ => panic!("Incompatible type for sqrt"),
                     },
+                    CalculationMethod::CONCAT => match (op1.clone(), op2.clone()) {
+                        (RegisterValue::String(a), RegisterValue::String(b)) => {
+                            RegisterValue::String(a + &b)
+                        }
+                        _ => panic!("~ requires two String operands"),
+                    },
                 };
 
                 machine.registers.set(&destination, result);
