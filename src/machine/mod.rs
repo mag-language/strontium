@@ -99,6 +99,7 @@ impl Strontium {
         executors.insert(Opcode::StoreLocal, Rc::new(StoreLocalExecutor));
         executors.insert(Opcode::LoadLocal, Rc::new(LoadLocalExecutor));
         executors.insert(Opcode::Jump, Rc::new(JumpExecutor));
+        executors.insert(Opcode::JumpC, Rc::new(JumpCExecutor));
         executors.insert(Opcode::Copy, Rc::new(CopyExecutor));
         executors.insert(Opcode::Dispatch, Rc::new(DispatchExecutor));
 

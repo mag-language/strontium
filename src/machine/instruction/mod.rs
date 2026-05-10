@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{RegisterValue, Strontium};
+use super::register::RegisterType;
 use crate::machine::opcode::Opcode;
 use crate::types::StrontiumError;
 
@@ -11,12 +12,14 @@ pub trait Executor {
     fn execute(&self, machine: &mut Strontium) -> Result<bool, StrontiumError>;
 }
 
-/// A pattern for multimethod dispatch - either a specific value or a wildcard.
+/// A pattern for multimethod dispatch - either a specific value, a type match, or a wildcard.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum DispatchPattern {
     /// Match a specific value (e.g., Int64(0) for fib(0))
     Value(RegisterValue),
-    /// Match any value (variable pattern like fib(n))
+    /// Match any value of a specific type (e.g., Int64 for def foo(n Int))
+    Type(RegisterType),
+    /// Match any value (variable pattern with no type annotation)
     Any,
 }
 
@@ -25,6 +28,7 @@ impl DispatchPattern {
     pub fn matches(&self, value: &RegisterValue) -> bool {
         match self {
             DispatchPattern::Value(v) => v == value,
+            DispatchPattern::Type(t) => value.get_type() == *t,
             DispatchPattern::Any => true,
         }
     }
@@ -32,7 +36,8 @@ impl DispatchPattern {
     /// Get the precedence of this pattern (higher = more specific).
     pub fn precedence(&self) -> usize {
         match self {
-            DispatchPattern::Value(_) => 2,
+            DispatchPattern::Value(_) => 3,
+            DispatchPattern::Type(_) => 2,
             DispatchPattern::Any => 1,
         }
     }
@@ -194,6 +199,12 @@ pub enum Instruction {
         /// The name of the multimethod to dispatch.
         method_name: String,
     },
+
+    // Compile-time-only pseudo-instructions. These are resolved to real instructions
+    // in link_bytecode and must never reach the encoding stage.
+    LabelTarget { id: usize },
+    JumpToLabel { id: usize },
+    JumpCToLabel { id: usize, conditional_address: String },
 }
 
 impl Instruction {
@@ -216,6 +227,11 @@ impl Instruction {
             Instruction::StoreLocal { .. } => Opcode::StoreLocal,
             Instruction::LoadLocal { .. } => Opcode::LoadLocal,
             Instruction::Dispatch { .. } => Opcode::Dispatch,
+            Instruction::LabelTarget { .. }
+            | Instruction::JumpToLabel { .. }
+            | Instruction::JumpCToLabel { .. } => {
+                unreachable!("compile-time pseudo-instruction reached get_opcode")
+            }
         }
     }
 }
@@ -235,6 +251,7 @@ pub enum CalculationMethod {
     DIVIDE,
     POWER,
     MODULO,
+    SQRT,
 }
 
 impl Into<u8> for CalculationMethod {
@@ -246,6 +263,7 @@ impl Into<u8> for CalculationMethod {
             CalculationMethod::DIVIDE => 3,
             CalculationMethod::POWER => 4,
             CalculationMethod::MODULO => 5,
+            CalculationMethod::SQRT => 6,
         }
     }
 }
@@ -259,6 +277,7 @@ impl From<u8> for CalculationMethod {
             3 => CalculationMethod::DIVIDE,
             4 => CalculationMethod::POWER,
             5 => CalculationMethod::MODULO,
+            6 => CalculationMethod::SQRT,
             _ => unreachable!(),
         }
     }

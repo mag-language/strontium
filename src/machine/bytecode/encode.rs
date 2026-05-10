@@ -305,6 +305,12 @@ impl Into<Vec<u8>> for Instruction {
                 b.append(&mut method_name.as_bytes().to_vec());
                 b
             }
+
+            Instruction::LabelTarget { .. }
+            | Instruction::JumpToLabel { .. }
+            | Instruction::JumpCToLabel { .. } => {
+                panic!("compile-time pseudo-instruction reached encoding stage")
+            }
         };
 
         bytes.append(&mut data);

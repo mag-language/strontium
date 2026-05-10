@@ -201,7 +201,7 @@ impl Into<Vec<u8>> for RegisterValue {
                 bytes.extend_from_slice(&string_bytes);
             }
             RegisterValue::Boolean(b) => {
-                bytes.push(4); // Type tag for Boolean
+                bytes.push(13); // Type tag for Boolean
                 bytes.push(b as u8);
             }
             RegisterValue::Map(_) => {
@@ -441,8 +441,8 @@ impl std::fmt::Display for RegisterValue {
             RegisterValue::UInt16(i) => write!(f, "{}", i),
             RegisterValue::UInt32(i) => write!(f, "{}", i),
             RegisterValue::UInt64(i) => write!(f, "{}", i),
-            RegisterValue::Float32(n) => write!(f, "{}", n),
-            RegisterValue::Float64(n) => write!(f, "{}", n),
+            RegisterValue::Float32(n) => write!(f, "{:?}", n),
+            RegisterValue::Float64(n) => write!(f, "{:?}", n),
             RegisterValue::String(s) => write!(f, "{}", s),
             RegisterValue::Boolean(b) => write!(f, "{}", b),
             RegisterValue::Map(m) => write!(f, "{:?}", m),
@@ -452,7 +452,7 @@ impl std::fmt::Display for RegisterValue {
 }
 
 /// Define possible register types which support conversion to byte values for encoding.
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub enum RegisterType {
     Empty = 100,
     Int8 = 101,

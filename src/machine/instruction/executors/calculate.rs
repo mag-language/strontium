@@ -36,6 +36,12 @@ impl Executor for CalculateExecutor {
                         (RegisterValue::Float64(a), RegisterValue::Float64(b)) => RegisterValue::Float64(a.powf(b)),
                         _ => panic!("Incompatible types for power"),
                     },
+                    CalculationMethod::SQRT => match op1.clone() {
+                        RegisterValue::Int64(a) => RegisterValue::Float64((a as f64).sqrt()),
+                        RegisterValue::Float64(a) => RegisterValue::Float64(a.sqrt()),
+                        RegisterValue::Float32(a) => RegisterValue::Float32(a.sqrt()),
+                        _ => panic!("Incompatible type for sqrt"),
+                    },
                 };
 
                 machine.registers.set(&destination, result);
