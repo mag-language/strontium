@@ -27,6 +27,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Update outdated unreleased diff link.
 -->
 
+## [0.9.0] - September 13, 2026
+
+### Added
+
+- `LoadType` instruction and `LoadTypeExecutor`, which store a register's type tag in another register for type-based dispatch.
+- `CONCAT` calculation method for string concatenation.
+- `InterruptKind::Panic`, which stops execution with an error message. The compiler uses it when no multimethod variant matches a call.
+
+### Changed
+
+- `Print` interrupts show `nothing` for empty registers instead of printing no output at all.
+
+### Removed
+
+- Runtime multimethod dispatch: the `Dispatch` opcode, `DispatchExecutor`, `MultimethodTable`, `register_method`, `dispatch`, and `DispatchPattern`. Dispatch is now compiled into bytecode by `magc`.
+
 ## [0.8.0] - May 10, 2026
 
 ### Added
