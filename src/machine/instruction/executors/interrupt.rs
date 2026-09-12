@@ -27,8 +27,9 @@ impl Executor for InterruptExecutor {
                     }
                     let value = machine.registers.get(&interrupt.address);
                     if let Some(value) = value {
-                        if !matches!(value, RegisterValue::Empty) {
-                            println!("{}", value);
+                        match value {
+                            RegisterValue::Empty => println!("nothing"),
+                            value => println!("{}", value),
                         }
                     } else {
                         println!("Invalid register address: {}", interrupt.address);
