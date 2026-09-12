@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["bytecode","instruction","opcode","register"],"struct":["DispatchMethod","StackFrame","Strontium"]};
+window.SIDEBAR_ITEMS = {"mod":["bytecode","instruction","opcode","register"],"struct":["CancellationToken","StackFrame","Strontium"]};

@@ -1,3 +1,2 @@
-var srcIndex = new Map(JSON.parse('[["strontium",["",[["machine",[["bytecode",[["parselets",[],["mod.rs"]]],["decode.rs","encode.rs","mod.rs"]],["instruction",[["executors",[],["calculate.rs","call.rs","halt.rs","interrupt.rs","load.rs","mod.rs","ret.rs"]]],["mod.rs"]]],["mod.rs","opcode.rs","register.rs"]],["types",[],["error.rs","mod.rs","program.rs","value.rs"]]],["lib.rs"]]]]'));
-createSrcSidebar();
-//{"start":36,"fragment_lengths":[345]}
+createSrcSidebar('[["strontium",["",[["machine",[["bytecode",[["parselets",[],["mod.rs"]]],["decode.rs","encode.rs","mod.rs"]],["instruction",[["executors",[],["calculate.rs","call.rs","compare.rs","copy.rs","halt.rs","interrupt.rs","jump.rs","jumpc.rs","load.rs","load_local.rs","loadtype.rs","mod.rs","ret.rs","store_local.rs"]]],["mod.rs"]]],["mod.rs","opcode.rs","register.rs"]],["types",[],["error.rs","mod.rs","program.rs","value.rs"]]],["lib.rs"]]]]');
+//{"start":19,"fragment_lengths":[436]}
