@@ -25,6 +25,8 @@ pub struct Interrupt {
 pub enum InterruptKind {
     Print,
     Read,
+    /// Stop execution with an error carrying the string in the address register.
+    Panic,
 }
 
 impl Into<u8> for InterruptKind {
@@ -32,6 +34,7 @@ impl Into<u8> for InterruptKind {
         match self {
             InterruptKind::Print => 0,
             InterruptKind::Read => 1,
+            InterruptKind::Panic => 2,
         }
     }
 }
@@ -41,6 +44,7 @@ impl From<u8> for InterruptKind {
         match byte {
             0 => InterruptKind::Print,
             1 => InterruptKind::Read,
+            2 => InterruptKind::Panic,
             _ => unreachable!(),
         }
     }

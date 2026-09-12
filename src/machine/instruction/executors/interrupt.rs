@@ -1,6 +1,7 @@
 use super::super::InterruptKind;
 use crate::machine::register::RegisterValue;
-use crate::machine::{Executor, Strontium, StrontiumError};
+use crate::machine::{Executor, Strontium};
+use crate::types::StrontiumError;
 use crate::Instruction;
 
 /// Attend to an event that needs immediate attention.
@@ -32,6 +33,16 @@ impl Executor for InterruptExecutor {
                     } else {
                         println!("Invalid register address: {}", interrupt.address);
                     }
+                }
+
+                InterruptKind::Panic => {
+                    let msg = machine.registers.get(&interrupt.address)
+                        .map(|v| format!("{}", v))
+                        .unwrap_or_else(|| interrupt.address.clone());
+                    let arg_display = machine.registers.get("arg")
+                        .map(|v| format!("{:?}({})", v.get_type(), v))
+                        .unwrap_or_else(|| "unknown".to_string());
+                    return Err(StrontiumError::MethodNotFound(format!("{}: {}", msg, arg_display)));
                 }
 
                 _ => {}
