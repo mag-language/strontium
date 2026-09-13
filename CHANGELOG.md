@@ -27,6 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Update outdated unreleased diff link.
 -->
 
+## [0.9.1] - September 13, 2026
+
+### Changed
+
+- No changes to Strontium itself; released together with `magc` and `mag` 0.9.1 to keep the versions in sync.
+
 ## [0.9.0] - September 13, 2026
 
 ### Added
